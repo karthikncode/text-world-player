@@ -52,5 +52,3 @@ client1 = loowy.new(wsServer, { transportEncoding = 'json',
         print 'Got to WAMP Client instance onReconnect callback'
     end
 })
-
-print(client1)
