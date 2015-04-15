@@ -1,54 +1,31 @@
--- client to connect to websocket
+-- client to connect to telnet
+host = 'localhost'
+port = 4000
+user = 'root'
+password = 'root'
 
---
--- Project: Loowy
--- User: kostik
--- Date: 08.03.15
---
+local socket = require 'socket'
 
-local config = {}
-local wsServer
+client = assert(socket.connect(host, port))
+client:settimeout(1)
 
-for line in io.lines('config.ini') do
-    local key, value = line:match("^(%w+)%s*=%s*(.+)$")
-    if key and value then
-        if tonumber(value) then value = tonumber(value) end
-        if value == "true" then value = true end
-        if value == "false" then value = false end
-
-        if key == 'wsServer' then
-            wsServer = value
-        else
-            config[key] = value
-        end
-    end
+-- Get data from Evennia
+function data_in()
+	local msg, err = client:receive()
+	local text = ''
+	while not err do
+		text = text .. '\n' .. msg
+		msg, err = client:receive()
+	end
+	return text
 end
 
-local ev = require 'ev'
-local loowy = require 'loowy.client'
+-- Send data to Evennia
+function data_out(data)
+	client:send(data)
+end
 
-local client1
-local firstDisconnect = true
+function login()
+	data_out('connect ' .. user .. ' ' .. password)
+end
 
-print('Connecting client to WAMP Server: ' ..  wsServer)
-
-client1 = loowy.new(wsServer, { transportEncoding = 'json',
-    -- realm = config.realm,
-    -- maxRetries = config.maxRetries,
-    onConnect = function()
-        print 'Got to WAMP Client instance onConnect callback'
-    end,
-    onClose = function()
-        print 'Got to WAMP Client instance onClose callback'
-        if firstDisconnect then
-            client1.connect()
-            firstDisconnect = false
-        end
-    end,
-    onError = function()
-        print 'Got to WAMP Client instance onError callback'
-    end,
-    onReconnect = function()
-        print 'Got to WAMP Client instance onReconnect callback'
-    end
-})
