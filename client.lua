@@ -28,4 +28,3 @@ end
 function login()
 	data_out('connect ' .. user .. ' ' .. password)
 end
-
