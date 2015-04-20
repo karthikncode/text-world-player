@@ -180,10 +180,12 @@ function nql:getQUpdate(args)
     end
 
     -- Compute {max_a Q(s_2, a), max_o Q(s_2, o)}.
-    q2_max = target_q_net:forward(s2):float()
-    
+    q2_max = target_q_net:forward(s2)
+    q2_max[1] = q2_max[1]:float():max(2)
+    q2_max[2] = q2_max[2]:float():max(2)
 
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)
+    q2 = {}
     q2[1] = q2_max[1]:clone():mul(self.discount):cmul(term)
     q2[2] = q2_max[2]:clone():mul(self.discount):cmul(term)
 
@@ -193,7 +195,10 @@ function nql:getQUpdate(args)
     delta[2]:add(q2[2])
 
     -- q = Q(s,a)
-    local q_all = self.network:forward(s):float()
+    local q_all = self.network:forward(s)
+    q_all[1] = q_all[1]:float()
+    q_all[2] = q_all[2]:float()
+
     q = {torch.FloatTensor(q_all[1]:size(1)), torch.FloatTensor(q_all[2]:size(1))}
     for i=1,q_all[1]:size(1) do
         q[1][i] = q_all[1][i][a[i]]
@@ -206,10 +211,10 @@ function nql:getQUpdate(args)
     delta[2]:add(-1, q[2])
 
     if self.clip_delta then
-        delta[1][delta:ge(self.clip_delta)] = self.clip_delta
-        delta[1][delta:le(-self.clip_delta)] = -self.clip_delta
-        delta[2][delta:ge(self.clip_delta)] = self.clip_delta
-        delta[2][delta:le(-self.clip_delta)] = -self.clip_delta
+        delta[1][delta[1]:ge(self.clip_delta)] = self.clip_delta
+        delta[1][delta[1]:le(-self.clip_delta)] = -self.clip_delta
+        delta[2][delta[2]:ge(self.clip_delta)] = self.clip_delta
+        delta[2][delta[2]:le(-self.clip_delta)] = -self.clip_delta
     end
 
     local targets = {torch.zeros(self.minibatch_size, self.n_actions):float(), 
@@ -232,9 +237,11 @@ function nql:qLearnMinibatch()
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
     assert(self.transitions:size() > self.minibatch_size)
 
-    local s, a, r, s2, term = self.transitions:sample(self.minibatch_size)
+    local s, a, o, r, s2, term = self.transitions:sample(self.minibatch_size)
 
-    local targets, delta, q2_max = self:getQUpdate{s=s, a=a, r=r, s2=s2,
+    -- print(s, a, o, r, s2, term)
+
+    local targets, delta, q2_max = self:getQUpdate{s=s, a=a, objs=o, r=r, s2=s2,
         term=term, update_qmax=true}
 
     -- zero gradients of parameters
@@ -280,7 +287,7 @@ end
 
 function nql:compute_validation_statistics()
     local targets, delta, q2_max = self:getQUpdate{s=self.valid_s,
-        a=self.valid_a, r=self.valid_r, s2=self.valid_s2, term=self.valid_term}
+        a=self.valid_a, o = self.valid_o, r=self.valid_r, s2=self.valid_s2, term=self.valid_term}
 
     self.v_avg = self.q_max * (q2_max[1]:mean() + q2_max[2]:mean())/2
     self.tderr_avg = (delta[1]:clone():abs():mean() + delta[2]:clone():abs():mean())/2
@@ -315,7 +322,6 @@ function nql:perceive(reward, state, terminal, testing, testing_ep)
     end
 
     curState= self.transitions:get_recent()
-    curState = curState:resize(1, unpack(self.input_dims))
 
     -- Select action
     local actionIndex = 1
@@ -388,23 +394,18 @@ function nql:getBestRandom(q, N)
 end
 
 
-function nql:greedy(state)
-    -- Turn single state into minibatch.  Needed for convolutional nets.
-    if state:dim() == 2 then
-        assert(false, 'Input must be at least 3D')
-        state = state:resize(1, state:size(1), state:size(2))
-    end
-
+function nql:greedy(state)  
     if self.gpu >= 0 then
         state = state:cuda()
     end
-
-    local q = self.network:forward(state):float():squeeze()
+    local q = self.network:forward(state)
+    q[1] = q[1]:float():squeeze()
+    q[2] = q[2]:float():squeeze()
 
     local best = {}
     local maxq = {}
-    best[1], maxq[1] = getBestRandom(q[1], self.n_actions)
-    best[2], maxq[2] = getBestRandom(q[2], self.n_objects)
+    best[1], maxq[1] = self:getBestRandom(q[1], self.n_actions)
+    best[2], maxq[2] = self:getBestRandom(q[2], self.n_objects)
 
     self.lastAction = best[1]
     self.lastObject = best[2]

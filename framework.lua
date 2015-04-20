@@ -1,14 +1,14 @@
 -- Layer to create quests and act as middle-man between Evennia and Agent
 require 'utils'
 
-local DEFAULT_REWARD = -1
+local DEFAULT_REWARD = -0.1
 
 quests = {'You are hungry.', 'You are sleepy.', 'You are bored.', 'You are getting fat.'}
-quest_actions = {'eat', 'sleep', 'watch' ,'exercise'}
+quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
 quest_index = torch.random(1, #quests)
 
-actions = {"eat", "watch", "sleep", "exercise"} -- hard code in
-objects = {} -- read from build file
+actions = {"eat", "watch", "sleep", "exercise", "go"} -- hard code in
+objects = {'north','south','east','west'} -- read from build file
 
 symbols = {}
 symbol_mapping = {}
@@ -22,12 +22,11 @@ function parse_game_output(text)
 	for i=1, #text do
 		if string.match(text[i], "REWARD") then
 			if string.match(text[i], quest_actions[quest_index]) then
-				reward = string.match(text[i], "%d+")
+				reward = tonumber(string.match(text[i], "%d+"))
 			end
 		else
 			table.insert(text_to_agent, text[i])
 		end
-
 	end
 	if not reward then
 		reward = DEFAULT_REWARD
@@ -38,7 +37,15 @@ end
 function getState()
 	local terminal = false -- TODO
 	local inData = data_in()
-	local text, reward = parse_game_output(inData)
+	while #inData == 0 or not string.match(inData[#inData],'<EOM>') do	
+		TableConcat(inData, data_in())
+	end
+	local text, reward = parse_game_output(inData)		
+	print(text, reward)
+	sleep(2)
+	if reward > 0 then
+		print(text, reward)
+	end
 	local vector = convert_text_to_bow(text)
 	return vector, reward, terminal
 end
@@ -46,6 +53,7 @@ end
 --take a step in the game
 function step_game(action_index, object_index)
 	data_out(build_command(actions[action_index], objects[object_index]))
+	print(actions[action_index] .. ' ' .. objects[object_index])
 	return getState()
 end
 
@@ -59,6 +67,7 @@ end
 
 -- build game command to send to the game
 function build_command(action, object)
+
 	return action .. ' ' ..object
 end
 

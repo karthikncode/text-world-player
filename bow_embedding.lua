@@ -1,5 +1,5 @@
 --BOW 
-
+require 'nn'
 -- IMP if args is not passed, it takes from global 'args'
 return function(args)
 
@@ -12,10 +12,8 @@ return function(args)
         mlp:add(nn.Linear(n_hid, n_hid))
         mlp:add(nn.Rectifier())
 
-        local mlp_out = nn.Sequential()
-        mlp_out:add(nn.Replicate(2))
-        mlp_out:add(nn.SplitTable(1)) -- CHECK
 
+        local mlp_out = nn.ConcatTable()
         mlp_out:add(nn.Linear(n_hid, args.n_actions))
         mlp_out:add(nn.Linear(n_hid, args.n_objects))
 

@@ -27,11 +27,18 @@ function data_out(data)
 end
 
 function login(user, password)
-	local pre_login_text = data_in()
-	print(pre_login_text)
+	local num_rooms = 4
+	local pre_login_text = data_in()	
+	print(pre_login_text)	
 	sleep(1)
 	data_out('connect ' .. user .. ' ' .. password)
-	sleep(1)
-	data_out('@tel #2')
-	data_out('start')
+	data_out('@tel tut#0'..torch.random(1, num_rooms))
+	sleep(0.1)
+	data_in()
+	sleep(0.1)
+	data_in()
+	sleep(0.1)
+	data_in()
+	sleep(0.1)
+	data_out('l')
 end
