@@ -44,8 +44,8 @@ function getState()
 end
 
 --take a step in the game
-function step_game(action_index, obj)
-	data_out(build_command(actions[action_index], obj))
+function step_game(action_index, object_index)
+	data_out(build_command(actions[action_index], objects[object_index]))
 	return getState()
 end
 
@@ -94,12 +94,17 @@ function makeSymbolMapping(filename)
 end
 
 function convert_text_to_bow(input_text)
-	local list_words = split(input_text, "%a+")
 	local vector = torch.zeros(#symbols)
-	for i=1,#list_words do			
-		local word = list_words[i]
-		word = word:lower()	
-		vector[symbol_mapping[word]] = vector[symbol_mapping[word]] + 1
+	for i, line in pairs(input_text) do
+		local list_words = split(line, "%a+")
+		for i=1,#list_words do			
+			local word = list_words[i]
+			word = word:lower()
+			--ignore words not in vocab
+			if symbol_mapping[word] then	
+				vector[symbol_mapping[word]] = vector[symbol_mapping[word]] + 1
+			end
+		end
 	end
 	return vector
 end

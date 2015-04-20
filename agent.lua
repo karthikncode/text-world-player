@@ -9,6 +9,7 @@ login('root', 'root')
 
 framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
 
+print(symbol_mapping)
 print(symbols)
 
 -- while true do
@@ -118,7 +119,7 @@ local nrewards
 local nepisodes
 local episode_reward
 
-local state, reward, terminal = framework:getState() 
+local state, reward, terminal = framework.getState() 
 
 print("Iteration ..", step)
 while step < opt.steps do
@@ -127,12 +128,12 @@ while step < opt.steps do
 
     -- game over? get next game!
     if not terminal then
-        state, reward, terminal = framework:step(action_index, object_index)
+        state, reward, terminal = framework.step(action_index, object_index)
     else
         if opt.random_starts > 0 then
-            state, reward, terminal = framework:nextRandomGame()
+            state, reward, terminal = framework.nextRandomGame()
         else
-            state, reward, terminal = framework:newGame()
+            state, reward, terminal = framework.newGame()
         end
     end
 

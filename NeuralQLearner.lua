@@ -120,6 +120,7 @@ function nql:__init(args)
     self.numSteps = 0 -- Number of perceived states.
     self.lastState = nil
     self.lastAction = nil
+    self.lastObject = nil
     self.v_avg = 0 -- V running average.
     self.tderr_avg = 0 -- TD error running average.
 
@@ -305,7 +306,7 @@ function nql:perceive(reward, state, terminal, testing, testing_ep)
 
     --Store transition s, a, r, s'
     if self.lastState and not testing then
-        self.transitions:add(self.lastState, self.lastAction, reward,
+        self.transitions:add(self.lastState, self.lastAction, self.lastObject, reward,
                              self.lastTerminal, priority)
     end
 
@@ -338,7 +339,8 @@ function nql:perceive(reward, state, terminal, testing, testing_ep)
     end
 
     self.lastState = state:clone()
-    self.lastAction = {actionIndex, objectIndex}
+    self.lastAction = actionIndex
+    self.lastObject = objectIndex
     self.lastTerminal = terminal
 
     if self.target_q and self.numSteps % self.target_q == 1 then
@@ -359,12 +361,13 @@ function nql:eGreedy(state, testing_ep)
                 math.max(0, self.numSteps - self.learn_start))/self.ep_endt))
     -- Epsilon greedy
     if torch.uniform() < self.ep then
-        return {torch.random(1, self.n_actions), torch.random(1, self.n_objects)}
+        return torch.random(1, self.n_actions), torch.random(1, self.n_objects)
     else
         return self:greedy(state)
     end
 end
 
+-- Evaluate all actions (with random tie-breaking)
 function nql:getBestRandom(q, N)
     local maxq = q[1]
     local besta = {1}
@@ -385,7 +388,6 @@ function nql:getBestRandom(q, N)
 end
 
 
-
 function nql:greedy(state)
     -- Turn single state into minibatch.  Needed for convolutional nets.
     if state:dim() == 2 then
@@ -404,9 +406,11 @@ function nql:greedy(state)
     best[1], maxq[1] = getBestRandom(q[1], self.n_actions)
     best[2], maxq[2] = getBestRandom(q[2], self.n_objects)
 
-    self.lastAction = {best[1], best[2]}
+    self.lastAction = best[1]
+    self.lastObject = best[2]
     self.bestq = (maxq[1] + maxq[2])/2
     
+    return best[1], best[2]
 end
 
 function nql:_loadNet()
