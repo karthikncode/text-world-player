@@ -108,7 +108,7 @@ function nql:__init(args)
     ---- internally it always uses ByteTensors for states, scaling and
     ---- converting accordingly
     local transition_args = {
-        stateDim = self.state_dim, numActions = self.n_actions,
+        stateDim = self.state_dim, numActions = self.n_actions, numObjects = self.n_objects,
         histLen = self.hist_len, gpu = self.gpu,
         maxSize = self.replay_memory, histType = self.histType,
         histSpacing = self.histSpacing, nonTermProb = self.nonTermProb,
