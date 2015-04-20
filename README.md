@@ -1,1 +1,1 @@
-Requirements: luarocks install loowy
+Requirements: 'socket' package for client connection.

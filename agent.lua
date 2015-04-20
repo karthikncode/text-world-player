@@ -7,7 +7,7 @@ require 'utils'
 -- dumb agent
 login('root', 'root')
 
-makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
+framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
 
 print(symbols)
 
@@ -26,6 +26,17 @@ print(symbols)
 
 
 ---------------------------------------------------------------
+
+if not dqn then
+	dqn = {}
+	require 'nn'
+	require 'nngraph'
+	require 'nnutils'
+	require 'Scale'
+	require 'NeuralQLearner'
+	require 'TransitionTable'
+	require 'Rectifier'
+end
 
 local cmd = torch.CmdLine()
 cmd:text()
@@ -68,6 +79,19 @@ cmd:text()
 local opt = cmd:parse(arg)
 
 --- General setup.
+if opt.agent_params then
+    opt.agent_params = str_to_table(opt.agent_params)
+    opt.agent_params.gpu       = opt.gpu
+    opt.agent_params.best      = opt.best
+    opt.agent_params.verbose   = opt.verbose
+    if opt.network ~= '' then
+        opt.agent_params.network = opt.network
+    end
+
+    opt.agent_params.actions = framework.getActions()
+		opt.agent_params.objects = framework.getObjects()
+end	
+
 local agent = dqn[opt.agent](opt.agent_params) -- calls dqn.NeuralQLearner:init
 
 -- override print to always flush the output
@@ -103,12 +127,12 @@ while step < opt.steps do
 
     -- game over? get next game!
     if not terminal then
-        screen, reward, terminal = game_env:step(game_actions[action_index], obj)
+        state, reward, terminal = framework:step(action_index, object_index)
     else
         if opt.random_starts > 0 then
-            screen, reward, terminal = game_env:nextRandomGame()
+            state, reward, terminal = framework:nextRandomGame()
         else
-            screen, reward, terminal = game_env:newGame()
+            state, reward, terminal = framework:newGame()
         end
     end
 
@@ -125,7 +149,7 @@ while step < opt.steps do
 		--Testing
     if step % opt.eval_freq == 0 and step > learn_start then
 
-        screen, reward, terminal = game_env:newGame()
+        screen, reward, terminal = framework:newGame()
 
         total_reward = 0
         nrewards = 0
@@ -137,7 +161,7 @@ while step < opt.steps do
             local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
 
             -- Play game in test mode (episodes don't end when losing a life)
-            screen, reward, terminal = game_env:step(game_actions[action_index])
+            screen, reward, terminal = framework:step(game_actions[action_index])
 
             if estep%1000 == 0 then collectgarbage() end
 
@@ -151,7 +175,7 @@ while step < opt.steps do
                 total_reward = total_reward + episode_reward
                 episode_reward = 0
                 nepisodes = nepisodes + 1
-                screen, reward, terminal = game_env:nextRandomGame()
+                screen, reward, terminal = framework:nextRandomGame()
             end
         end
 
