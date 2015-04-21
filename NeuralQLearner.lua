@@ -156,12 +156,12 @@ end
 
 
 function nql:getQUpdate(args)
-    local s, a, r, s2, term, delta, objs
+    local s, a, r, s2, term, delta, o
     local q, q2, q2_max
 
     s = args.s
     a = args.a
-    objs = args.objs
+    o = args.o
     r = args.r
     s2 = args.s2
     term = args.term
@@ -204,7 +204,7 @@ function nql:getQUpdate(args)
         q[1][i] = q_all[1][i][a[i]]
     end
     for i=1,q_all[2]:size(1) do
-        q[2][i] = q_all[2][i][objs[i]]
+        q[2][i] = q_all[2][i][o[i]]
     end
 
     delta[1]:add(-1, q[1])
@@ -222,8 +222,8 @@ function nql:getQUpdate(args)
     for i=1,math.min(self.minibatch_size,a:size(1)) do
         targets[1][i][a[i]] = delta[1][i]
     end
-    for i=1,math.min(self.minibatch_size,objs:size(1)) do
-        targets[2][i][objs[i]] = delta[2][i]
+    for i=1,math.min(self.minibatch_size,o:size(1)) do
+        targets[2][i][o[i]] = delta[2][i]
     end
 
     if self.gpu >= 0 then targets = targets:cuda() end
@@ -241,7 +241,7 @@ function nql:qLearnMinibatch()
 
     -- print(s, a, o, r, s2, term)
 
-    local targets, delta, q2_max = self:getQUpdate{s=s, a=a, objs=o, r=r, s2=s2,
+    local targets, delta, q2_max = self:getQUpdate{s=s, a=a, o=o, r=r, s2=s2,
         term=term, update_qmax=true}
 
     -- zero gradients of parameters
