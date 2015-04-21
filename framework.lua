@@ -1,15 +1,17 @@
 -- Layer to create quests and act as middle-man between Evennia and Agent
 require 'utils'
+local underscore = require 'underscore'
 local DEBUG = false
 
 local DEFAULT_REWARD = -0.1
 local STEP_COUNT = 0 -- count the number of steps in current episode
 local MAX_STEPS = 100
 
-quests = {'You are hungry.', 'You are sleepy.', 'You are bored.', 'You are getting fat.'}
+quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
+quest_checklist = {}
+quest_levels = 1 --number of levels in any given quest
 rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
-
 
 actions = {"eat", "watch", "sleep", "exercise", "go"} -- hard code in
 objects = {'north','south','east','west'} -- read from build file
@@ -18,6 +20,7 @@ symbols = {}
 symbol_mapping = {}
 
 NUM_ROOMS = 4
+
 
 function random_teleport()
 	local room_index = torch.random(1, NUM_ROOMS)
@@ -31,9 +34,13 @@ function random_teleport()
 end
 
 function random_quest()
-	quest_index = torch.random(1, #quests)
+	indxs = torch.randperm(#quests)
+	for i=1,quest_levels do
+		local quest_index = indxs[i]
+		quest_checklist[#quest_checklist+1] = quest_index
+	end
 	if DEBUG then
-		print("Start quest", quests[quest_index], quest_actions[quest_index])
+		print("Start quest", quests[quest_checklist[1]], quest_actions[quest_checklist[1]])
 	end
 end
 
@@ -50,12 +57,12 @@ function parse_game_output(text)
 	-- extract REWARD if it exists
 	-- text is a list of sentences
 	local reward = nil
-	local text_to_agent = {quests[quest_index]}
+	local text_to_agent = {quests[quest_checklist[1]]}
 	for i=1, #text do
 		if i < #text  and string.match(text[i], '<EOM>') then
-			text_to_agent = {quests[quest_index]}
+			text_to_agent = {quests[quest_checklist[1]]}
 		elseif string.match(text[i], "REWARD") then
-			if string.match(text[i], quest_actions[quest_index]) then
+			if string.match(text[i], quest_actions[quest_checklist[1]]) then
 				reward = tonumber(string.match(text[i], "%d+"))
 			end
 		else
@@ -83,6 +90,14 @@ function getState(print_on)
 		-- 	sleep(2)
 		-- end
 	end
+	if reward >= 1 then
+		quest_checklist = underscore.rest(quest_checklist) --remove first element in table
+		if #quest_checklist == 0 then
+			--quest has been succesfully finished
+			terminal = true
+		end
+	end
+
 	local vector = convert_text_to_bow(text)
 	return vector, reward, terminal
 end

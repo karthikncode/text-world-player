@@ -3,6 +3,8 @@
 require 'client'
 local framework = require 'framework.lua'
 require 'utils'
+require 'xlua'
+require 'optim'
 
 --  agent login
 login('root', 'root')
@@ -104,15 +106,16 @@ local episode_reward
 
 local state, reward, terminal = framework.newGame() 
 
-print("Iteration ..", step)
+print("Started RL based training ...")
 local pos_reward_cnt = 0
+
+-- trainLogger = optim.Logger(paths.concat(opt.save, 'test.log'))
+-- testLogger = optim.Logger(paths.concat(opt.save, 'test.log'))
+
 
 while step < opt.steps do
     step = step + 1
-
-    if step%50 == 0 then
-        print('Iteration ..', step)
-    end
+    xlua.progress(step, opt.steps)
 
     local action_index, object_index = agent:perceive(reward, state, terminal)
     -- game over? get next game!
@@ -145,7 +148,7 @@ while step < opt.steps do
 
 		--Testing
     if step % opt.eval_freq == 0 and step > learn_start then
-
+        print('Testing Starts ... ')
         state, reward, terminal = framework.newGame()
 
         total_reward = 0
@@ -210,6 +213,7 @@ while step < opt.steps do
             step, step*opt.actrep, total_reward, agent.ep, agent.lr, time_dif,
             training_rate, eval_time, opt.actrep*opt.eval_steps/eval_time,
             nepisodes, nrewards))
+        print('Testing Ends ... ')
     end
 
     if step % opt.save_freq == 0 or step == opt.steps then
