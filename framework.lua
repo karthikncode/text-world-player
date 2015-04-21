@@ -1,18 +1,49 @@
 -- Layer to create quests and act as middle-man between Evennia and Agent
 require 'utils'
+local DEBUG = false
 
 local DEFAULT_REWARD = -0.1
+local STEP_COUNT = 0 -- count the number of steps in current episode
+local MAX_STEPS = 100
 
 quests = {'You are hungry.', 'You are sleepy.', 'You are bored.', 'You are getting fat.'}
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
-quest_index = torch.random(1, #quests)
-print(quests[quest_index], quest_actions[quest_index])
+rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
+
 
 actions = {"eat", "watch", "sleep", "exercise", "go"} -- hard code in
 objects = {'north','south','east','west'} -- read from build file
 
 symbols = {}
 symbol_mapping = {}
+
+NUM_ROOMS = 4
+
+function random_teleport()
+	local room_index = torch.random(1, NUM_ROOMS)
+	data_out('@tel tut#0'..room_index)
+	sleep(0.1)
+	data_in()
+	data_out('l')
+	if DEBUG then
+		print('Start Room : ' .. room_index ..' ' .. rooms[room_index])
+	end
+end
+
+function random_quest()
+	quest_index = torch.random(1, #quests)
+	if DEBUG then
+		print("Start quest", quests[quest_index], quest_actions[quest_index])
+	end
+end
+
+function login(user, password)
+	local num_rooms = 4
+	local pre_login_text = data_in()	
+	print(pre_login_text)	
+	sleep(1)
+	data_out('connect ' .. user .. ' ' .. password)
+end
 
 --Function to parse the output of the game (to extract rewards, etc. )
 function parse_game_output(text)
@@ -37,19 +68,21 @@ function parse_game_output(text)
 	return text_to_agent, reward	
 end
 
-function getState()
-	local terminal = false -- TODO
+function getState(print_on)
+	local terminal = (STEP_COUNT >= MAX_STEPS)
 	local inData = data_in()
 	while #inData == 0 or not string.match(inData[#inData],'<EOM>') do	
 		TableConcat(inData, data_in())
 	end
 	local text, reward = parse_game_output(inData)		
-	-- print(text, reward)
-	-- sleep(2)
-	-- if reward > 0 then
-		-- print(text, reward)
-		-- sleep(2)
-	-- end
+	if DEBUG or print_on then
+		print(text, reward)
+		sleep(0.1)
+		-- if reward > 0 then
+		-- 	print(text, reward)
+		-- 	sleep(2)
+		-- end
+	end
 	local vector = convert_text_to_bow(text)
 	return vector, reward, terminal
 end
@@ -57,9 +90,13 @@ end
 --take a step in the game
 function step_game(action_index, object_index)
 	data_out(build_command(actions[action_index], objects[object_index]))
-	-- print(actions[action_index] .. ' ' .. objects[object_index])
+	if DEBUG then 
+		print(actions[action_index] .. ' ' .. objects[object_index])
+	end
+	STEP_COUNT = STEP_COUNT + 1
 	return getState()
 end
+
 
 -- TODO
 function nextRandomGame()
@@ -67,11 +104,14 @@ end
 
 -- TODO
 function newGame()
+	random_teleport()
+	random_quest()
+	STEP_COUNT = 0
+	return getState(false)
 end
 
 -- build game command to send to the game
 function build_command(action, object)
-
 	return action .. ' ' ..object
 end
 

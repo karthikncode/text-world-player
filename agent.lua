@@ -4,27 +4,10 @@ require 'client'
 local framework = require 'framework.lua'
 require 'utils'
 
--- dumb agent
+--  agent login
 login('root', 'root')
 
 framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
-
--- print(symbol_mapping)
--- print(symbols)
-
--- while true do
--- 	local inData = data_in()
--- 	local text, reward = parse_game_output(inData)
--- 	print(text)
--- 	print("R: " .. reward)	
-
--- 	action = 'watch'
--- 	obj = 'tv'
--- 	data_out(build_command(action, obj))
-
--- 	sleep(2)
--- end
-
 
 ---------------------------------------------------------------
 
@@ -119,7 +102,7 @@ local nrewards
 local nepisodes
 local episode_reward
 
-local state, reward, terminal = framework.getState() 
+local state, reward, terminal = framework.newGame() 
 
 print("Iteration ..", step)
 local pos_reward_cnt = 0
@@ -127,7 +110,6 @@ local pos_reward_cnt = 0
 while step < opt.steps do
     step = step + 1
     local action_index, object_index = agent:perceive(reward, state, terminal)
-
     -- game over? get next game!
     if not terminal then
         state, reward, terminal = framework.step(action_index, object_index)
@@ -136,11 +118,11 @@ while step < opt.steps do
         	-- print("Step "..step, pos_reward_cnt) 
         end
     else
-        if opt.random_starts > 0 then
-            state, reward, terminal = framework.nextRandomGame()
-        else
-            state, reward, terminal = framework.newGame()
-        end
+        -- if opt.random_starts > 0 then
+        --     state, reward, terminal = framework.nextRandomGame()
+        -- else
+          state, reward, terminal = framework.newGame()
+        -- end
     end
 
     if step % opt.prog_freq == 0 then
@@ -157,7 +139,7 @@ while step < opt.steps do
 		--Testing
     if step % opt.eval_freq == 0 and step > learn_start then
 
-        screen, reward, terminal = framework:newGame()
+        state, reward, terminal = framework.newGame()
 
         total_reward = 0
         nrewards = 0
@@ -166,10 +148,10 @@ while step < opt.steps do
 
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
-            local action_index = agent:perceive(reward, screen, terminal, true, 0.05)
+            local action_index, object_index = agent:perceive(reward, state, terminal, true, 0.05)
 
             -- Play game in test mode (episodes don't end when losing a life)
-            screen, reward, terminal = framework:step(game_actions[action_index])
+		        state, reward, terminal = framework.step(action_index, object_index)
 
             if estep%1000 == 0 then collectgarbage() end
 
@@ -183,7 +165,7 @@ while step < opt.steps do
                 total_reward = total_reward + episode_reward
                 episode_reward = 0
                 nepisodes = nepisodes + 1
-                screen, reward, terminal = framework:nextRandomGame()
+                state, reward, terminal = framework.newGame()
             end
         end
 

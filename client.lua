@@ -26,17 +26,4 @@ function data_out(data)
 	client:send(data .. '\n')
 end
 
-function login(user, password)
-	local num_rooms = 4
-	local pre_login_text = data_in()	
-	print(pre_login_text)	
-	sleep(1)
-	data_out('connect ' .. user .. ' ' .. password)
-	local room_index = torch.random(1, num_rooms)
-	data_out('@tel tut#0'..room_index)
-	sleep(0.1)
-	print(data_in())
-	sleep(0.1)
-	data_out('l')
-	print('Room : ' .. room_index)
-end
+
