@@ -119,6 +119,7 @@ end
 
 -- TODO
 function newGame()
+	quest_checklist = {}
 	random_teleport()
 	random_quest()
 	STEP_COUNT = 0
