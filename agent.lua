@@ -109,6 +109,11 @@ local pos_reward_cnt = 0
 
 while step < opt.steps do
     step = step + 1
+
+    if step%50 == 0 then
+        print('Iteration ..', step)
+    end
+
     local action_index, object_index = agent:perceive(reward, state, terminal)
     -- game over? get next game!
     if not terminal then
@@ -134,7 +139,9 @@ while step < opt.steps do
         collectgarbage()
     end
 
-    if step%1000 == 0 then collectgarbage() end
+    if step%1000 == 0 then 
+        collectgarbage() 
+    end
 
 		--Testing
     if step % opt.eval_freq == 0 and step > learn_start then
