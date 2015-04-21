@@ -9,8 +9,8 @@ login('root', 'root')
 
 framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
 
-print(symbol_mapping)
-print(symbols)
+-- print(symbol_mapping)
+-- print(symbols)
 
 -- while true do
 -- 	local inData = data_in()
@@ -122,6 +122,8 @@ local episode_reward
 local state, reward, terminal = framework.getState() 
 
 print("Iteration ..", step)
+local pos_reward_cnt = 0
+
 while step < opt.steps do
     step = step + 1
     local action_index, object_index = agent:perceive(reward, state, terminal)
@@ -129,6 +131,10 @@ while step < opt.steps do
     -- game over? get next game!
     if not terminal then
         state, reward, terminal = framework.step(action_index, object_index)
+        if reward >0 then 
+        	pos_reward_cnt = pos_reward_cnt + 1
+        	-- print("Step "..step, pos_reward_cnt) 
+        end
     else
         if opt.random_starts > 0 then
             state, reward, terminal = framework.nextRandomGame()
@@ -140,8 +146,9 @@ while step < opt.steps do
     if step % opt.prog_freq == 0 then
         assert(step==agent.numSteps, 'trainer step: ' .. step ..
                 ' & agent.numSteps: ' .. agent.numSteps)
-        print("Steps: ", step)
+        print("Steps: ", step, "pos rewards:" , pos_reward_cnt)
         agent:report()
+        pos_reward_cnt = 0
         collectgarbage()
     end
 

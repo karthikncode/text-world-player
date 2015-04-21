@@ -6,6 +6,7 @@ local DEFAULT_REWARD = -0.1
 quests = {'You are hungry.', 'You are sleepy.', 'You are bored.', 'You are getting fat.'}
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
 quest_index = torch.random(1, #quests)
+print(quests[quest_index], quest_actions[quest_index])
 
 actions = {"eat", "watch", "sleep", "exercise", "go"} -- hard code in
 objects = {'north','south','east','west'} -- read from build file
@@ -20,7 +21,9 @@ function parse_game_output(text)
 	local reward = nil
 	local text_to_agent = {quests[quest_index]}
 	for i=1, #text do
-		if string.match(text[i], "REWARD") then
+		if i < #text  and string.match(text[i], '<EOM>') then
+			text_to_agent = {quests[quest_index]}
+		elseif string.match(text[i], "REWARD") then
 			if string.match(text[i], quest_actions[quest_index]) then
 				reward = tonumber(string.match(text[i], "%d+"))
 			end
@@ -41,11 +44,12 @@ function getState()
 		TableConcat(inData, data_in())
 	end
 	local text, reward = parse_game_output(inData)		
-	print(text, reward)
-	sleep(2)
-	if reward > 0 then
-		print(text, reward)
-	end
+	-- print(text, reward)
+	-- sleep(2)
+	-- if reward > 0 then
+		-- print(text, reward)
+		-- sleep(2)
+	-- end
 	local vector = convert_text_to_bow(text)
 	return vector, reward, terminal
 end
@@ -53,7 +57,7 @@ end
 --take a step in the game
 function step_game(action_index, object_index)
 	data_out(build_command(actions[action_index], objects[object_index]))
-	print(actions[action_index] .. ' ' .. objects[object_index])
+	-- print(actions[action_index] .. ' ' .. objects[object_index])
 	return getState()
 end
 
