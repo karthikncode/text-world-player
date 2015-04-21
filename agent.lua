@@ -30,7 +30,10 @@ cmd:text('Train Agent in Environment:')
 cmd:text()
 cmd:text('Options:')
 
+cmd:option('-exp_folder', '', 'name of folder where current exp state is being stored')
+
 cmd:option('-framework', '', 'name of training framework')
+
 cmd:option('-env', '', 'name of environment to use')
 cmd:option('-game_path', '', 'path to environment file (ROM)')
 cmd:option('-env_params', '', 'string of environment parameters')
@@ -63,7 +66,7 @@ cmd:option('-gpu', -1, 'gpu flag')
 cmd:text()
 
 local opt = cmd:parse(arg)
-
+print(opt)
 --- General setup.
 if opt.agent_params then
     opt.agent_params = str_to_table(opt.agent_params)
@@ -109,9 +112,10 @@ local state, reward, terminal = framework.newGame()
 print("Started RL based training ...")
 local pos_reward_cnt = 0
 
--- trainLogger = optim.Logger(paths.concat(opt.save, 'test.log'))
--- testLogger = optim.Logger(paths.concat(opt.save, 'test.log'))
+test_avg_Q = optim.Logger(paths.concat(opt.exp_folder , 'test_avgQ.log'))
+test_avg_R = optim.Logger(paths.concat(opt.exp_folder , 'test_avgR.log'))
 
+print('[Start] Network weight sum:',agent.w:sum())
 
 while step < opt.steps do
     step = step + 1
@@ -159,6 +163,7 @@ while step < opt.steps do
 
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
+            xlua.progress(estep, opt.eval_steps)
             local action_index, object_index = agent:perceive(reward, state, terminal, true, 0.05)
 
             -- Play game in test mode (episodes don't end when losing a life)
@@ -195,7 +200,14 @@ while step < opt.steps do
             td_history[ind] = agent.tderr_avg
             qmax_history[ind] = agent.q_max
         end
-        print("V", v_history[ind], "TD error", td_history[ind], "Qmax", qmax_history[ind])
+        print("V", v_history[ind], "TD error", td_history[ind], "V avg:", v_history[ind])
+
+        --saving and plotting
+        test_avg_R:add{['% Average Reward'] = total_reward}
+        test_avg_Q:add{['% Average Q'] = agent.v_avg}
+        
+        test_avg_R:style{['% Average Reward'] = '-'}; test_avg_R:plot()
+        test_avg_Q:style{['% Average Q'] = '-'}; test_avg_Q:plot()
 
         reward_history[ind] = total_reward
         reward_counts[ind] = nrewards
@@ -228,10 +240,6 @@ while step < opt.steps do
             agent.deltas, agent.tmp = nil, nil, nil, nil, nil, nil, nil, nil
 
         local filename = opt.name
-        if opt.save_versions > 0 then
-            filename = filename .. "_" .. math.floor(step / opt.save_versions)
-        end
-        filename = filename
         torch.save(filename .. ".t7", {agent = agent,
                                 model = agent.network,
                                 best_model = agent.best_network,
@@ -244,6 +252,7 @@ while step < opt.steps do
                                 qmax_history = qmax_history,
                                 arguments=opt})
         if opt.saveNetworkParams then
+            print('Network weight sum:', w:sum())
             local nets = {network=w:clone():float()}
             torch.save(filename..'.params.t7', nets, 'ascii')
         end

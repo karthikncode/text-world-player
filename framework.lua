@@ -21,6 +21,7 @@ symbol_mapping = {}
 
 NUM_ROOMS = 4
 
+local current_room_description = ""
 
 function random_teleport()
 	local room_index = torch.random(1, NUM_ROOMS)
@@ -53,14 +54,15 @@ function login(user, password)
 end
 
 --Function to parse the output of the game (to extract rewards, etc. )
+
 function parse_game_output(text)
 	-- extract REWARD if it exists
 	-- text is a list of sentences
 	local reward = nil
-	local text_to_agent = {quests[quest_checklist[1]]}
+	local text_to_agent = {current_room_description, quests[quest_checklist[1]]}
 	for i=1, #text do
 		if i < #text  and string.match(text[i], '<EOM>') then
-			text_to_agent = {quests[quest_checklist[1]]}
+			text_to_agent = {current_room_description, quests[quest_checklist[1]]}
 		elseif string.match(text[i], "REWARD") then
 			if string.match(text[i], quest_actions[quest_checklist[1]]) then
 				reward = tonumber(string.match(text[i], "%d+"))
@@ -81,6 +83,14 @@ function getState(print_on)
 	while #inData == 0 or not string.match(inData[#inData],'<EOM>') do	
 		TableConcat(inData, data_in())
 	end
+
+	data_out('look')
+	local inData2 = data_in()
+	while #inData2 == 0 or not string.match(inData2[#inData2],'<EOM>') do	
+		TableConcat(inData2, data_in())
+	end
+	current_room_description = inData2[1]
+
 	local text, reward = parse_game_output(inData)		
 	if DEBUG or print_on then
 		print(text, reward)
@@ -162,9 +172,17 @@ function makeSymbolMapping(filename)
 	end
 end
 
+-- Args: {
+--	1: desc of room
+--	2: quest desc
+--	3: response from engine after executing command
+--	4: <EOM>
+-- }
 function convert_text_to_bow(input_text)
 	local vector = torch.zeros(#symbols)
-	for i, line in pairs(input_text) do
+	-- for i, line in pairs(input_text) do
+	for j=1,2 do
+		line = input_text[j]
 		local list_words = split(line, "%a+")
 		for i=1,#list_words do			
 			local word = list_words[i]

@@ -72,6 +72,7 @@ function nql:__init(args)
 
     local err, msg = pcall(require, self.network)
     if not err then
+        print('Preloading network file:', self.network)
         -- try to load saved agent
         local err_msg, exp = pcall(torch.load, self.network)
         if not err_msg then
@@ -238,6 +239,7 @@ function nql:qLearnMinibatch()
     assert(self.transitions:size() > self.minibatch_size)
 
     local s, a, o, r, s2, term = self.transitions:sample(self.minibatch_size)
+
 
     -- print(s, a, o, r, s2, term)
 
