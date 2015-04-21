@@ -118,25 +118,26 @@ while step < opt.steps do
     xlua.progress(step, opt.steps)
 
     local action_index, object_index = agent:perceive(reward, state, terminal)
+
+    if reward > 0 then 
+        pos_reward_cnt = pos_reward_cnt + 1
+    end
+        
     -- game over? get next game!
     if not terminal then
         state, reward, terminal = framework.step(action_index, object_index)
-        if reward >0 then 
-        	pos_reward_cnt = pos_reward_cnt + 1
-        	-- print("Step "..step, pos_reward_cnt) 
-        end
     else
         -- if opt.random_starts > 0 then
         --     state, reward, terminal = framework.nextRandomGame()
         -- else
-          state, reward, terminal = framework.newGame()
+        state, reward, terminal = framework.newGame()
         -- end
     end
 
     if step % opt.prog_freq == 0 then
         assert(step==agent.numSteps, 'trainer step: ' .. step ..
                 ' & agent.numSteps: ' .. agent.numSteps)
-        print("Steps: ", step, "pos rewards:" , pos_reward_cnt)
+        print("\nSteps: ", step, " | Achieved quest level, current reward:" , pos_reward_cnt)
         agent:report()
         pos_reward_cnt = 0
         collectgarbage()
