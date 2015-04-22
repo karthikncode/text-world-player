@@ -79,6 +79,10 @@ if opt.agent_params then
 
     opt.agent_params.actions = framework.getActions()
 		opt.agent_params.objects = framework.getObjects()
+
+    if opt.netfile=="\"bow_embedding\"" then
+        opt.agent_params.state_dim = #symbols
+    end
 end	
 
 local agent = dqn[opt.agent](opt.agent_params) -- calls dqn.NeuralQLearner:init

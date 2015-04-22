@@ -3,7 +3,7 @@ require 'utils'
 local underscore = require 'underscore'
 local DEBUG = false
 
-local DEFAULT_REWARD = -0.1
+local DEFAULT_REWARD = -0.01
 local STEP_COUNT = 0 -- count the number of steps in current episode
 local MAX_STEPS = 500
 
@@ -14,7 +14,7 @@ quest_levels = 1 --number of levels in any given quest
 rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
 
 actions = {"eat", "watch", "sleep", "exercise", "go"} -- hard code in
-objects = {'north','south','east','west'} -- read from build file
+objects = {'north','south','east','west'} -- read rest from build file
 
 symbols = {}
 symbol_mapping = {}
@@ -69,7 +69,7 @@ function parse_game_output(text)
 				reward = tonumber(string.match(text[i], "%d+"))
 			end
 		else
-			table.insert(text_to_agent, text[i])
+			--table.insert(text_to_agent, text[i])
 		end
 	end
 	if not reward then
@@ -145,7 +145,9 @@ end
 
 function parseLine( list_words, start_index)
 	-- parse line to update symbols and symbol_mapping
+	-- IMP: make sure we're using simple english - ignores punctuation, etc.
 	local sindx	
+	start_index = start_index or 1
 	for i=start_index,#list_words do			
 		word = split(list_words[i], "%a+")[1]
 		word = word:lower()	
@@ -156,6 +158,13 @@ function parseLine( list_words, start_index)
 		end
 	end
 end
+
+function addQuestWordsToVocab()
+	for i, quest in pairs(quests) do
+		parseLine(split(quest, "%a+"), 1)
+	end
+end
+
 
 -- read in text data from file with sentences (one sentence per line) - nicely tokenized
 function makeSymbolMapping(filename)
@@ -171,6 +180,7 @@ function makeSymbolMapping(filename)
 			table.insert(objects, split(list_words[2], "%a+")[1])
 		end
 	end
+	addQuestWordsToVocab()
 end
 
 -- Args: {
@@ -181,8 +191,7 @@ end
 -- }
 function convert_text_to_bow(input_text)
 	local vector = torch.zeros(#symbols)
-	-- for j, line in pairs(input_text) do
-	for j=1,2 do
+	for j, line in pairs(input_text) do
 		line = input_text[j]
 		local list_words = split(line, "%a+")
 		for i=1,#list_words do			
@@ -191,7 +200,10 @@ function convert_text_to_bow(input_text)
 			--ignore words not in vocab
 			if symbol_mapping[word] then	
 				vector[symbol_mapping[word]] = vector[symbol_mapping[word]] + 1
+			else
+				print(word .. ' not in vocab')
 			end
+
 		end
 	end
 	return vector

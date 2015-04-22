@@ -211,12 +211,13 @@ function nql:getQUpdate(args)
     delta[1]:add(-1, q[1])
     delta[2]:add(-1, q[2])
 
-    if self.clip_delta then
-        delta[1][delta[1]:ge(self.clip_delta)] = self.clip_delta
-        delta[1][delta[1]:le(-self.clip_delta)] = -self.clip_delta
-        delta[2][delta[2]:ge(self.clip_delta)] = self.clip_delta
-        delta[2][delta[2]:le(-self.clip_delta)] = -self.clip_delta
-    end
+    -- @Karthik
+    -- if self.clip_delta then
+    --     delta[1][delta[1]:ge(self.clip_delta)] = self.clip_delta
+    --     delta[1][delta[1]:le(-self.clip_delta)] = -self.clip_delta
+    --     delta[2][delta[2]:ge(self.clip_delta)] = self.clip_delta
+    --     delta[2][delta[2]:le(-self.clip_delta)] = -self.clip_delta
+    -- end
 
     local targets = {torch.zeros(self.minibatch_size, self.n_actions):float(), 
                     torch.zeros(self.minibatch_size, self.n_objects):float()}
