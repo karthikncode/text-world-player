@@ -1,6 +1,6 @@
 --BOW 
 require 'nn'
-require 'cunn'
+--require 'cunn'
 -- IMP if args is not passed, it takes from global 'args'
 return function(args)
 
