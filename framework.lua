@@ -5,7 +5,7 @@ local DEBUG = false
 
 local DEFAULT_REWARD = -0.1
 local STEP_COUNT = 0 -- count the number of steps in current episode
-local MAX_STEPS = 100
+local MAX_STEPS = 500
 
 quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
@@ -35,9 +35,10 @@ function random_teleport()
 end
 
 function random_quest()
-	indxs = torch.randperm(#quests)
+	-- indxs = torch.randperm(#quests)
 	for i=1,quest_levels do
-		local quest_index = indxs[i]
+		-- local quest_index = indxs[i]
+		local quest_index = torch.random(1, #quests)
 		quest_checklist[#quest_checklist+1] = quest_index
 	end
 	if DEBUG then
@@ -95,10 +96,10 @@ function getState(print_on)
 	if DEBUG or print_on then
 		print(text, reward)
 		sleep(0.1)
-		-- if reward > 0 then
-		-- 	print(text, reward)
-		-- 	sleep(2)
-		-- end
+		if reward > 0 then
+			print(text, reward)
+			sleep(2)
+		end
 	end
 	if reward >= 1 then
 		quest_checklist = underscore.rest(quest_checklist) --remove first element in table
@@ -130,9 +131,9 @@ end
 -- TODO
 function newGame()
 	quest_checklist = {}
+	STEP_COUNT = 0
 	random_teleport()
 	random_quest()
-	STEP_COUNT = 0
 	return getState(false)
 end
 
@@ -180,7 +181,7 @@ end
 -- }
 function convert_text_to_bow(input_text)
 	local vector = torch.zeros(#symbols)
-	-- for i, line in pairs(input_text) do
+	-- for j, line in pairs(input_text) do
 	for j=1,2 do
 		line = input_text[j]
 		local list_words = split(line, "%a+")
