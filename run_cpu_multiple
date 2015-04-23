@@ -4,7 +4,8 @@ FRAMEWORK="alewrap"
 
 i=0
 MAX_PARALLEL=8
-for discount in 0.99 0.75 0.5 0.25; do
+#for discount in 0.99 0.75 0.5 0.25; do
+for discount in 0.75 0.5 0.25; do
 	for lr in 0.00025 0.0005 0.001 0.005 0.01; do
 		((i++))
 		game_path=$PWD"/roms/"
