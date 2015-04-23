@@ -1,14 +1,14 @@
 -- client to connect to telnet
 host = 'localhost'
 port = 4000
-user = 'root'
-password = 'root'
 timeout = 0.001
 
 local socket = require 'socket'
 
-client = assert(socket.connect(host, port))
-client:settimeout(timeout)
+function client_connect(port)
+	client = assert(socket.connect(host, port))
+	client:settimeout(timeout)
+end
 
 -- Get data from Evennia
 function data_in()

@@ -6,11 +6,6 @@ require 'utils'
 require 'xlua'
 require 'optim'
 
---  agent login
-login('root', 'root')
-
-framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
-
 ---------------------------------------------------------------
 
 if not dqn then
@@ -62,11 +57,26 @@ cmd:option('-verbose', 2,
            'the higher the level, the more information is printed to screen')
 cmd:option('-threads', 1, 'number of BLAS threads')
 cmd:option('-gpu', -1, 'gpu flag')
+cmd:option('-game_num', 1, 'game number (for parallel game servers)')
+
 
 cmd:text()
 
 local opt = cmd:parse(arg)
 print(opt)
+
+
+--  agent login
+local port = 4000 + opt.game_num
+print(port)
+client_connect(port)
+login('root', 'root')
+
+framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
+
+
+
+
 --- General setup.
 if opt.agent_params then
     opt.agent_params = str_to_table(opt.agent_params)
