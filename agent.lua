@@ -116,8 +116,6 @@ local state, reward, terminal = framework.newGame()
 print("Started RL based training ...")
 local pos_reward_cnt = 0
 
-test_avg_Q = optim.Logger(paths.concat(opt.exp_folder , 'test_avgQ.log'))
-test_avg_R = optim.Logger(paths.concat(opt.exp_folder , 'test_avgR.log'))
 
 print('[Start] Network weight sum:',agent.w:sum())
 
@@ -158,6 +156,9 @@ while step < opt.steps do
 		--Testing
     if step % opt.eval_freq == 0 and step > learn_start then
         print('Testing Starts ... ')
+        test_avg_Q = test_avg_Q or optim.Logger(paths.concat(opt.exp_folder , 'test_avgQ.log'))
+        test_avg_R = test_avg_R or optim.Logger(paths.concat(opt.exp_folder , 'test_avgR.log'))
+
         state, reward, terminal = framework.newGame()
 
         total_reward = 0

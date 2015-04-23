@@ -69,6 +69,7 @@ function parse_game_output(text)
 				reward = tonumber(string.match(text[i], "%d+"))
 			end
 		else
+			--IMP: only description and quest are necessary (for now)
 			--table.insert(text_to_agent, text[i])
 		end
 	end
