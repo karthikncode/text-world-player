@@ -81,13 +81,14 @@ end
 
 
 --take a step in the game
-function step_game(action_index, object_index)
-	data_out(build_command(actions[action_index], objects[object_index]))
+function step_game(action_index, object_index, gameLogger)
+	local command = build_command(actions[action_index], objects[object_index], gameLogger)
+	data_out(command)
 	if DEBUG then 
 		print(actions[action_index] .. ' ' .. objects[object_index])
 	end
 	STEP_COUNT = STEP_COUNT + 1
-	return getState()
+	return getState(gameLogger)
 end
 
 
@@ -96,16 +97,24 @@ function nextRandomGame()
 end
 
 -- TODO
-function newGame()
+function newGame(gameLogger)
+
 	quest_checklist = {}
 	STEP_COUNT = 0
 	random_teleport()
 	random_quest()
-	return getState(false)
+
+	if gameLogger then
+	end
+
+	return getState(gameLogger)
 end
 
 -- build game command to send to the game
-function build_command(action, object)
+function build_command(action, object, logger)
+	if logger then
+		logger:write(">>" .. action .. ' '.. object..'\n')
+	end
 	return action .. ' ' ..object
 end
 
@@ -204,7 +213,7 @@ end
 vector_function = convert_text_to_bow2
 -------------------------------------------------------------------
 
-function getState(print_on)
+function getState(logger, print_on)
 	local terminal = (STEP_COUNT >= MAX_STEPS)
 	local inData = data_in()
 	while #inData == 0 or not string.match(inData[#inData],'<EOM>') do	
@@ -236,6 +245,14 @@ function getState(print_on)
 	end
 
 	local vector = vector_function(text)
+
+	if logger then
+		logger:write(table.concat(text, ' '), '\n')
+		logger:write('Reward: '..reward, '\n')
+		if terminal then
+			logger:write('****************************\n\n')
+		end
+	end
 	return vector, reward, terminal
 end
 

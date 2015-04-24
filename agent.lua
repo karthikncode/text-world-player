@@ -5,6 +5,7 @@ local framework = require 'framework.lua'
 require 'utils'
 require 'xlua'
 require 'optim'
+require 'hdf5'
 
 ---------------------------------------------------------------
 
@@ -169,7 +170,9 @@ while step < opt.steps do
         test_avg_Q = test_avg_Q or optim.Logger(paths.concat(opt.exp_folder , 'test_avgQ.log'))
         test_avg_R = test_avg_R or optim.Logger(paths.concat(opt.exp_folder , 'test_avgR.log'))
 
-        state, reward, terminal = framework.newGame()
+        gameLogger = gameLogger or io.open(paths.concat(opt.exp_folder, 'game.log'), 'w')
+
+        state, reward, terminal = framework.newGame(gameLogger)
 
         total_reward = 0
         nrewards = 0
@@ -182,7 +185,7 @@ while step < opt.steps do
             local action_index, object_index = agent:perceive(reward, state, terminal, true, 0.05)
 
             -- Play game in test mode (episodes don't end when losing a life)
-		        state, reward, terminal = framework.step(action_index, object_index)
+		        state, reward, terminal = framework.step(action_index, object_index, gameLogger)
 
             if estep%1000 == 0 then collectgarbage() end
 
@@ -196,7 +199,7 @@ while step < opt.steps do
                 total_reward = total_reward + episode_reward
                 episode_reward = 0
                 nepisodes = nepisodes + 1
-                state, reward, terminal = framework.newGame()
+                state, reward, terminal = framework.newGame(gameLogger)
             end
         end
 
