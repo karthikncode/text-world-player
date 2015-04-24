@@ -79,40 +79,6 @@ function parse_game_output(text)
 	return text_to_agent, reward	
 end
 
-function getState(print_on)
-	local terminal = (STEP_COUNT >= MAX_STEPS)
-	local inData = data_in()
-	while #inData == 0 or not string.match(inData[#inData],'<EOM>') do	
-		TableConcat(inData, data_in())
-	end
-
-	data_out('look')
-	local inData2 = data_in()
-	while #inData2 == 0 or not string.match(inData2[#inData2],'<EOM>') do	
-		TableConcat(inData2, data_in())
-	end
-	current_room_description = inData2[1]
-
-	local text, reward = parse_game_output(inData)		
-	if DEBUG or print_on then
-		print(text, reward)
-		sleep(0.1)
-		if reward > 0 then
-			print(text, reward)
-			sleep(2)
-		end
-	end
-	if reward >= 1 then
-		quest_checklist = underscore.rest(quest_checklist) --remove first element in table
-		if #quest_checklist == 0 then
-			--quest has been succesfully finished
-			terminal = true
-		end
-	end
-
-	local vector = convert_text_to_bow(text)
-	return vector, reward, terminal
-end
 
 --take a step in the game
 function step_game(action_index, object_index)
@@ -187,8 +153,6 @@ end
 -- Args: {
 --	1: desc of room
 --	2: quest desc
---	3: response from engine after executing command
---	4: <EOM>
 -- }
 function convert_text_to_bow(input_text)
 	local vector = torch.zeros(#symbols)
@@ -210,6 +174,71 @@ function convert_text_to_bow(input_text)
 	return vector
 end
 
+-- Args: {
+--	1: desc of room
+--	2: quest desc
+-- }
+-- Create separate bow vectors for the two sentences
+function convert_text_to_bow2(input_text)
+	local vector = torch.zeros(2 * #symbols)
+	for j=1, 2 do
+		line = input_text[j]
+		local list_words = split(line, "%a+")
+		for i=1,#list_words do			
+			local word = list_words[i]
+			word = word:lower()
+			--ignore words not in vocab
+			if symbol_mapping[word] then	
+				vector[(j-1)*(#symbols) + symbol_mapping[word]] 
+						= vector[(j-1)*(#symbols) + symbol_mapping[word]] + 1
+			else
+				print(word .. ' not in vocab')
+			end
+
+		end
+	end
+	return vector
+end
+
+-------------------------VECTOR function -------------------------
+vector_function = convert_text_to_bow2
+-------------------------------------------------------------------
+
+function getState(print_on)
+	local terminal = (STEP_COUNT >= MAX_STEPS)
+	local inData = data_in()
+	while #inData == 0 or not string.match(inData[#inData],'<EOM>') do	
+		TableConcat(inData, data_in())
+	end
+
+	data_out('look')
+	local inData2 = data_in()
+	while #inData2 == 0 or not string.match(inData2[#inData2],'<EOM>') do	
+		TableConcat(inData2, data_in())
+	end
+	current_room_description = inData2[1]
+
+	local text, reward = parse_game_output(inData)		
+	if DEBUG or print_on then
+		print(text, reward)
+		sleep(0.1)
+		if reward > 0 then
+			print(text, reward)
+			sleep(2)
+		end
+	end
+	if reward >= 1 then
+		quest_checklist = underscore.rest(quest_checklist) --remove first element in table
+		if #quest_checklist == 0 then
+			--quest has been succesfully finished
+			terminal = true
+		end
+	end
+
+	local vector = vector_function(text)
+	return vector, reward, terminal
+end
+
 function getActions()
 	return actions
 end
@@ -218,6 +247,7 @@ function getObjects()
 	return objects
 end
 
+
 return {
 	makeSymbolMapping = makeSymbolMapping,
 	getActions = getActions, 
@@ -225,5 +255,5 @@ return {
 	getState = getState, 
 	step = step_game,
 	newGame = newGame,
-	nextRandomGame = nextRandomGame
+	nextRandomGame = nextRandomGame,
 }

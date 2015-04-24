@@ -75,9 +75,8 @@ login('root', 'root')
 framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
 
 
-
-
 --- General setup.
+
 if opt.agent_params then
     opt.agent_params = str_to_table(opt.agent_params)
     opt.agent_params.gpu       = opt.gpu
@@ -88,10 +87,11 @@ if opt.agent_params then
     end
 
     opt.agent_params.actions = framework.getActions()
-		opt.agent_params.objects = framework.getObjects()
+	opt.agent_params.objects = framework.getObjects()
 
+    print(#symbols)
     if opt.netfile=="\"bow_embedding\"" then
-        opt.agent_params.state_dim = #symbols
+        opt.agent_params.state_dim = 2 * (#symbols)
     end
 end	
 
