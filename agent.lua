@@ -112,6 +112,7 @@ local episode_counts = {}
 local time_history = {}
 local v_history = {}
 local qmax_history = {}
+local bestq_history = {}
 local td_history = {}
 local reward_history = {}
 local step = 0
@@ -182,10 +183,19 @@ while step < opt.steps do
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
             xlua.progress(estep, opt.eval_steps)
-            local action_index, object_index = agent:perceive(reward, state, terminal, true, 0.05)
+            local action_index, object_index, q_func = agent:perceive(reward, state, terminal, true, 0.05)
+
+             -- print Q function for previous state
+            if q_func then
+                gameLogger:write(table.tostring(q_func), '\n')
+            else
+                gameLogger:write("Random action\n")
+            end
 
             -- Play game in test mode (episodes don't end when losing a life)
 		        state, reward, terminal = framework.step(action_index, object_index, gameLogger)
+
+           
 
             if estep%1000 == 0 then collectgarbage() end
 

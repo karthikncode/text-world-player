@@ -325,13 +325,13 @@ function nql:perceive(reward, state, terminal, testing, testing_ep)
         self:sample_validation_data()
     end
 
-    curState= self.transitions:get_recent()
+    curState= self.transitions:get_recent() -- IMP: curState is with history - not same as 'state'
 
     -- Select action
     local actionIndex = 1
     local objectIndex = 1
     if not terminal then
-        actionIndex, objectIndex = self:eGreedy(curState, testing_ep)
+        actionIndex, objectIndex, q_func = self:eGreedy(curState, testing_ep)
     end
 
     self.transitions:add_recent_action({actionIndex, objectIndex})
@@ -358,7 +358,7 @@ function nql:perceive(reward, state, terminal, testing, testing_ep)
     end
 
     if not terminal then
-        return actionIndex, objectIndex
+        return actionIndex, objectIndex, q_func
     else
         return 0, 0
     end
@@ -415,7 +415,7 @@ function nql:greedy(state)
     self.lastObject = best[2]
     self.bestq = (maxq[1] + maxq[2])/2
     
-    return best[1], best[2]
+    return best[1], best[2], q
 end
 
 function nql:_loadNet()

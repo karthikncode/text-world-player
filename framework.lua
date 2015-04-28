@@ -13,7 +13,7 @@ quest_checklist = {}
 quest_levels = 1 --number of levels in any given quest
 rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
 
-actions = {"eat", "watch", "sleep", "exercise", "go"} -- hard code in
+actions = {"eat", "sleep", "watch", "exercise", "go"} -- hard code in
 objects = {'north','south','east','west'} -- read rest from build file
 
 symbols = {}
