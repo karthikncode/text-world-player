@@ -90,12 +90,15 @@ if opt.agent_params then
     opt.agent_params.actions = framework.getActions()
 	opt.agent_params.objects = framework.getObjects()
 
-    print(#symbols)
-    if opt.netfile=="\"bow_embedding\"" then
-        opt.agent_params.state_dim = 2 * (#symbols)
+    if string.match(opt.agent_params.network, "bow_embedding") then
+        if vector_function == convert_text_to_bow2 then            
+            opt.agent_params.state_dim = 2 * (#symbols)
+        else
+            opt.agent_params.state_dim = (#symbols)
+        end
     end
 end	
-
+print("state_dim", opt.agent_params.state_dim)
 local agent = dqn[opt.agent](opt.agent_params) -- calls dqn.NeuralQLearner:init
 
 -- override print to always flush the output

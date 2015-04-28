@@ -18,8 +18,8 @@ return function(args)
 
         rnn = nn.Sequential()
         rnn:add(r)
-        mlp:add(nn.Linear(n_hid, n_hid))
-        mlp:add(nn.Rectifier())
+        rnn:add(nn.Linear(n_hid, n_hid))
+        rnn:add(nn.Rectifier())
 
         local rnn_out = nn.ConcatTable()
         rnn_out:add(nn.Linear(n_hid, args.n_actions))
