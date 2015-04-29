@@ -3,14 +3,14 @@ require 'utils'
 local underscore = require 'underscore'
 local DEBUG = false
 
-local DEFAULT_REWARD = -0.1
+local DEFAULT_REWARD = -0.05
 local STEP_COUNT = 0 -- count the number of steps in current episode
 local MAX_STEPS = 500
 
 quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
 quest_checklist = {}
-quest_levels = 1 --number of levels in any given quest
+quest_levels = 2 --number of levels in any given quest
 rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
 
 actions = {"eat", "sleep", "watch", "exercise", "go"} -- hard code in
@@ -35,10 +35,10 @@ function random_teleport()
 end
 
 function random_quest()
-	-- indxs = torch.randperm(#quests)
+	indxs = torch.randperm(#quests)
 	for i=1,quest_levels do
-		-- local quest_index = indxs[i]
-		local quest_index = torch.random(1, #quests)
+		local quest_index = indxs[i]
+		-- local quest_index = torch.random(1, #quests)
 		quest_checklist[#quest_checklist+1] = quest_index
 	end
 	if DEBUG then
@@ -237,10 +237,12 @@ function getState(logger, print_on)
 		end
 	end
 	if reward >= 1 then
-		quest_checklist = underscore.rest(quest_checklist) --remove first element in table
+		quest_checklist = underscore.rest(quest_checklist) --remove first element in table		
 		if #quest_checklist == 0 then
 			--quest has been succesfully finished
 			terminal = true
+		else
+			text[2] = quests[quest_checklist[1]]
 		end
 	end
 
