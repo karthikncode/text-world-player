@@ -209,8 +209,30 @@ function convert_text_to_bow2(input_text)
 	return vector
 end
 
+
+function convert_text_to_ordered_list(input_text)
+	local vector = torch.zeros(#split(input_text[1], "%a+") + #split(input_text[2], "%a+"))
+	cnt=1
+	for j=1, 2 do
+		line = input_text[j]
+		local list_words = split(line, "%a+")
+		for i=1,#list_words do			
+			local word = list_words[i]
+			word = word:lower()
+			--ignore words not in vocab
+			vector[cnt] = symbol_mapping[word]
+			cnt=cnt+1
+		end
+	end
+	return vector
+end
+
 -------------------------VECTOR function -------------------------
-vector_function = convert_text_to_bow2
+if RECURRENT == 1 then
+	vector_function = convert_text_to_ordered_list
+else
+	vector_function = convert_text_to_bow2
+end
 -------------------------------------------------------------------
 
 function getState(logger, print_on)
