@@ -91,12 +91,7 @@ function step_game(action_index, object_index, gameLogger)
 	return getState(gameLogger)
 end
 
-
--- TODO
-function nextRandomGame()
-end
-
--- TODO
+-- starts a new game
 function newGame(gameLogger)
 
 	quest_checklist = {}
@@ -209,7 +204,7 @@ function convert_text_to_bow2(input_text)
 	return vector
 end
 
-
+-- for recurrent and other networks
 function convert_text_to_ordered_list(input_text)
 	local vector = torch.zeros(#split(input_text[1], "%a+") + #split(input_text[2], "%a+"))
 	cnt=1
