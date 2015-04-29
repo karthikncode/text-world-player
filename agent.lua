@@ -1,25 +1,5 @@
 -- agent
 
-require 'client'
-local framework = require 'framework.lua'
-require 'utils'
-require 'xlua'
-require 'optim'
-require 'hdf5'
-
----------------------------------------------------------------
-
-if not dqn then
-	dqn = {}
-	require 'nn'
-	require 'nngraph'
-	require 'nnutils'
-	require 'Scale'
-	require 'NeuralQLearner'
-	require 'TransitionTable'
-	require 'Rectifier'
-end
-
 local cmd = torch.CmdLine()
 cmd:text()
 cmd:text('Train Agent in Environment:')
@@ -46,6 +26,10 @@ cmd:option('-agent_params', '', 'string of agent parameters')
 cmd:option('-seed', 1, 'fixed input seed for repeatable experiments')
 cmd:option('-saveNetworkParams', false,
            'saves the agent network in a separate file')
+
+cmd:option('-recurrent', 0,'bow or recurrent')
+
+
 cmd:option('-prog_freq', 5*10^3, 'frequency of progress output')
 cmd:option('-save_freq', 5*10^4, 'the model is saved every save_freq steps')
 cmd:option('-eval_freq', 10^4, 'frequency of greedy evaluation')
@@ -66,6 +50,26 @@ cmd:text()
 local opt = cmd:parse(arg)
 print(opt)
 
+require 'client'
+require 'utils'
+require 'xlua'
+require 'optim'
+require 'hdf5'
+RECURRENT = opt.recurrent
+local framework = require 'framework'
+
+---------------------------------------------------------------
+
+if not dqn then
+    dqn = {}
+    require 'nn'
+    require 'nngraph'
+    require 'nnutils'
+    require 'Scale'
+    require 'NeuralQLearner'
+    require 'TransitionTable'
+    require 'Rectifier'
+end
 
 --  agent login
 local port = 4000 + opt.game_num
