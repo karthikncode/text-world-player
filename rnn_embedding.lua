@@ -12,7 +12,7 @@ return function(args)
     function create_network(args)
         rho = 5 --number of backprop steps
         n_hid = 10
-        nIndex = 10000
+        nIndex = 10000 
   
         r = nn.Recurrent(
            n_hid, nn.LookupTable(nIndex, n_hid), 

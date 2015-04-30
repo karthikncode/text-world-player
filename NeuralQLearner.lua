@@ -181,6 +181,8 @@ function nql:getQUpdate(args)
     end
 
     -- Compute {max_a Q(s_2, a), max_o Q(s_2, o)}.
+    print("S: ", s)
+    print("S2: ", s2)
     q2_max = target_q_net:forward(s2)
     q2_max[1] = q2_max[1]:float():max(2)
     q2_max[2] = q2_max[2]:float():max(2)

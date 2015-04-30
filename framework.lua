@@ -10,7 +10,6 @@ local MAX_STEPS = 500
 quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
 quest_checklist = {}
-quest_levels = 2 --number of levels in any given quest
 rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
 
 actions = {"eat", "sleep", "watch", "exercise", "go"} -- hard code in
@@ -36,7 +35,7 @@ end
 
 function random_quest()
 	indxs = torch.randperm(#quests)
-	for i=1,quest_levels do
+	for i=1,QUEST_LEVELS do
 		local quest_index = indxs[i]
 		-- local quest_index = torch.random(1, #quests)
 		quest_checklist[#quest_checklist+1] = quest_index
@@ -205,8 +204,10 @@ function convert_text_to_bow2(input_text)
 end
 
 -- for recurrent and other networks
+-- assumes that the symbol mapping has already been created
 function convert_text_to_ordered_list(input_text)
-	local vector = torch.zeros(#split(input_text[1], "%a+") + #split(input_text[2], "%a+"))
+	local NULL_INDEX = #symbols + 1
+	local vector = torch.ones(STATE_DIM) * NULL_INDEX
 	cnt=1
 	for j=1, 2 do
 		line = input_text[j]
@@ -219,7 +220,7 @@ function convert_text_to_ordered_list(input_text)
 			cnt=cnt+1
 		end
 	end
-	return vector
+	return reverse_tensor(vector)
 end
 
 -------------------------VECTOR function -------------------------

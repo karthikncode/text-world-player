@@ -12,6 +12,16 @@ function split(s, pattern)
 	return parts
 end
 
+function reverse_tensor(tensor)
+  --make sure tensor is 1D
+  local n = tensor:size(1)
+  local tmp = torch.Tensor(n)
+  for i=1, n do
+    tmp[i] = tensor[n+1-i]
+  end
+  return tmp
+end
+
 
 function str_to_table(str)
     if type(str) == 'table' then

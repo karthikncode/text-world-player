@@ -28,6 +28,8 @@ cmd:option('-saveNetworkParams', false,
            'saves the agent network in a separate file')
 
 cmd:option('-recurrent', 0,'bow or recurrent')
+cmd:option('-quest_levels', 1,'# of quests to complete in each run')
+cmd:option('-state_dim', 100, 'max dimensionality of raw state (stream of symbols or BOW vocab)')
 
 
 cmd:option('-prog_freq', 5*10^3, 'frequency of progress output')
@@ -56,6 +58,9 @@ require 'xlua'
 require 'optim'
 require 'hdf5'
 RECURRENT = opt.recurrent
+QUEST_LEVELS = opt.quest_levels
+STATE_DIM = opt.state_dim
+print(STATE_DIM)
 local framework = require 'framework'
 
 ---------------------------------------------------------------
@@ -94,7 +99,7 @@ if opt.agent_params then
     opt.agent_params.actions = framework.getActions()
 	opt.agent_params.objects = framework.getObjects()
 
-    if string.match(opt.agent_params.network, "bow_embedding") then
+    if RECURRENT == 0 then
         if vector_function == convert_text_to_bow2 then            
             opt.agent_params.state_dim = 2 * (#symbols)
         else
