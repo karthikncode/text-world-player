@@ -10,7 +10,7 @@ require 'recurrent.lua'
 return function(args)
 
     function create_network(args)
-        rho = 5 --number of backprop steps
+        rho = args.state_dim --number of backprop steps
         n_hid = 10
         nIndex = 10000 
   
@@ -22,7 +22,7 @@ return function(args)
 
         rnn = nn.Sequential()
         rnn:add(nn.Sequencer(r))
-        rnn:add(nn.Select(2, args.state_dim))
+        rnn:add(nn.SelectTable(args.state_dim))
         rnn:add(nn.Linear(n_hid, n_hid))
         rnn:add(nn.Rectifier())
 

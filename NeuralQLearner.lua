@@ -181,17 +181,18 @@ function nql:getQUpdate(args)
     end
 
     -- Compute {max_a Q(s_2, a), max_o Q(s_2, o)}.
-    print("S: ", s)
-    print("S2: ", s2)
+    -- print("S: ", s)
+    -- print("S2: ", s2)
     if RECURRENT == 0 then
         q2_max = target_q_net:forward(s2)
     else
-        local s2_tmp = tensor_to_table(s2, self.minibatch_size)
+        local s2_tmp = tensor_to_table(s2)
         q2_max = target_q_net:forward(s2_tmp)
     end
+    
     q2_max[1] = q2_max[1]:float():max(2)
     q2_max[2] = q2_max[2]:float():max(2)
-
+    
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)
     q2 = {}
     q2[1] = q2_max[1]:clone():mul(self.discount):cmul(term)
@@ -203,7 +204,14 @@ function nql:getQUpdate(args)
     delta[2]:add(q2[2])
 
     -- q = Q(s,a)
-    local q_all = self.network:forward(s)
+    local q_all
+    if RECURRENT == 0 then
+        q_all = self.network:forward(s)
+    else
+        local s_tmp = tensor_to_table(s)
+        q_all = self.network:forward(s_tmp)
+    end
+    
     q_all[1] = q_all[1]:float()
     q_all[2] = q_all[2]:float()
 
@@ -258,7 +266,18 @@ function nql:qLearnMinibatch()
     self.dw:zero()
 
     -- get new gradient
-    self.network:backward(s, targets)
+    if RECURRENT == 0 then     
+        self.network:backward(s, targets)
+    else
+        local s_tmp = tensor_to_table(s, self.minibatch_size)
+        -- local targets_table = {}
+        -- for i=1, #s_tmp-1 do
+        --     table.insert(targets_table, {0,0})
+        -- end
+        -- table.insert(targets_table, targets)
+
+        self.network:backward(s_tmp, targets)
+    end
 
     -- add weight cost to gradient
     self.dw:add(-self.wc, self.w)
@@ -409,7 +428,14 @@ function nql:greedy(state)
     if self.gpu >= 0 then
         state = state:cuda()
     end
-    local q = self.network:forward(state)
+    local q
+    if RECURRENT == 0 then
+        q = self.network:forward(state)
+    else
+        local state_tmp = tensor_to_table(state)
+        q = self.network:forward(state_tmp)
+    end
+
     q[1] = q[1]:float():squeeze()
     q[2] = q[2]:float():squeeze()
 

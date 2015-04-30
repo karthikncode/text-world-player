@@ -47,6 +47,7 @@ end
 
 -- IMP: very specific function - do not use for arbitrary tensors
 function tensor_to_table(tensor, batch_size)
+  batch_size = batch_size or tensor:size(1)
   local t2 = {}
   for i=1,tensor:size(2) do
     t2[i] = tensor[{{}, {i}}]:reshape(batch_size)
