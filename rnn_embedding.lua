@@ -21,7 +21,8 @@ return function(args)
         )
 
         rnn = nn.Sequential()
-        rnn:add(r)
+        rnn:add(nn.Sequencer(r))
+        rnn:add(nn.Select(2, args.state_dim))
         rnn:add(nn.Linear(n_hid, n_hid))
         rnn:add(nn.Rectifier())
 

@@ -1,4 +1,5 @@
 -- agent
+require 'torch'
 
 local cmd = torch.CmdLine()
 cmd:text()

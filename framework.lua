@@ -220,7 +220,8 @@ function convert_text_to_ordered_list(input_text)
 			cnt=cnt+1
 		end
 	end
-	return reverse_tensor(vector)
+	-- return reverse_tensor(vector)
+	return vector
 end
 
 -------------------------VECTOR function -------------------------

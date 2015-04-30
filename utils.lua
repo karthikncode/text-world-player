@@ -45,6 +45,16 @@ function str_to_table(str)
     return ttr
 end
 
+-- IMP: very specific function - do not use for arbitrary tensors
+function tensor_to_table(tensor, batch_size)
+  local t2 = {}
+  for i=1,tensor:size(2) do
+    t2[i] = tensor[{{}, {i}}]:reshape(batch_size)
+  end
+  return t2
+end
+
+
 function table.copy(t)
     if t == nil then return nil end
     local nt = {}
