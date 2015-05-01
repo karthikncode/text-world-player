@@ -5,7 +5,6 @@ local DEBUG = false
 
 local DEFAULT_REWARD = -0.05
 local STEP_COUNT = 0 -- count the number of steps in current episode
-local MAX_STEPS = 500
 
 quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above

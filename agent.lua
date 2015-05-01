@@ -31,6 +31,7 @@ cmd:option('-saveNetworkParams', false,
 cmd:option('-recurrent', 0,'bow or recurrent')
 cmd:option('-quest_levels', 1,'# of quests to complete in each run')
 cmd:option('-state_dim', 100, 'max dimensionality of raw state (stream of symbols or BOW vocab)')
+cmd:option('-max_steps', 100,'max steps per episode')
 
 
 cmd:option('-prog_freq', 5*10^3, 'frequency of progress output')
@@ -61,6 +62,7 @@ require 'hdf5'
 RECURRENT = opt.recurrent
 QUEST_LEVELS = opt.quest_levels
 STATE_DIM = opt.state_dim
+MAX_STEPS = opt.max_steps
 print(STATE_DIM)
 local framework = require 'framework'
 
@@ -87,7 +89,6 @@ framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
 
 
 --- General setup.
-
 if opt.agent_params then
     opt.agent_params = str_to_table(opt.agent_params)
     opt.agent_params.gpu       = opt.gpu

@@ -3,18 +3,24 @@
 FRAMEWORK="alewrap"
 
 i=0
-NUM_GAMES=2
+NUM_GAMES=2  #number of games to run in parallel
+max_steps=100
+minibatch_size=32
+quest_levels=1
+recurrent=1
+hist_len=1
+# netfile="\"bow_embedding\"" 
+# netfile="\"rnn_embedding\""  
+netfile="\"lstm_embedding\""  
 #for discount in 0.99 0.75 0.5 0.25; do
-for discount in 0.75 0.5 0.25; do
-	for lr in 0.00025 0.0005 0.001 0.005 0.01; do
+for discount in 0.99; do
+	for lr in 0.00025 0.0005 0.001 0.005 0.01 0.05; do
 		((i++))
     game_num=$((i % $NUM_GAMES + 1))
 		game_path=$PWD"/roms/"
 		env_params="useRGB=true"
 		agent="NeuralQLearner"
 		n_replay=1
-		netfile="\"bow_embedding\""  
-		# netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
 		update_freq=4
 		actrep=4
 		seed=1
@@ -25,17 +31,17 @@ for discount in 0.75 0.5 0.25; do
 		replay_memory=1000000
 		eps_end=0.1
 		eps_endt=replay_memory
-		exp_folder="logs/exp_runs/disc_"$discount"_lr_"$lr"/"
+		exp_folder="logs/lstm_runs/disc_"$discount"_lr_"$lr"/"
 		agent_type=$exp_folder"DQN3_0_1"
 		agent_name=$agent_type"_"$1"_FULL_Y"
-		state_dim=74
+		state_dim=20
 		ncols=1
-		agent_params="lr="$lr",ep=1,ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len=1,learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size=32,rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,target_q=10000,clip_delta=1,min_reward=-1,max_reward=1"
-		steps=500000
-		eval_freq=5000
-		eval_steps=5000
-		prog_freq=5000
-		save_freq=5000
+		agent_params="lr="$lr",ep=1,ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size="$minibatch_size",rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,target_q=10000,clip_delta=1,min_reward=-1,max_reward=1"
+		steps=2000000
+		eval_freq=10000
+		eval_steps=10000
+		prog_freq=10000
+		save_freq=10000
 		gpu=-1
 		random_starts=30
 		pool_frms="type="$pool_frms_type",size="$pool_frms_size
@@ -45,9 +51,9 @@ for discount in 0.75 0.5 0.25; do
 		echo $args
 
 		if ((i % $NUM_GAMES)); then
-			th agent.lua $args -saveNetworkParams -exp_folder $exp_folder -game_num $game_num &
+			th agent.lua $args -saveNetworkParams -exp_folder $exp_folder -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim&
 		else
-		    th agent.lua $args -saveNetworkParams -exp_folder $exp_folder -game_num $game_num ;
+		    th agent.lua $args -saveNetworkParams -exp_folder $exp_folder -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim;
 			sleep 60;
 		fi;
 	done;
