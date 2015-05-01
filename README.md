@@ -1,4 +1,5 @@
 Requirements: 'socket' package for client connection.
+'rnn' package for LSTM (nnx version is buggy with Sequencer for batches)
 
 Checks:
 1. Make sure evennia is reinstalled with our customizations.

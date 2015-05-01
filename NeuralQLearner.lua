@@ -187,6 +187,7 @@ function nql:getQUpdate(args)
         q2_max = target_q_net:forward(s2)
     else
         local s2_tmp = tensor_to_table(s2)
+        -- print(s2_tmp)
         q2_max = target_q_net:forward(s2_tmp)
     end
     
@@ -270,12 +271,6 @@ function nql:qLearnMinibatch()
         self.network:backward(s, targets)
     else
         local s_tmp = tensor_to_table(s, self.minibatch_size)
-        -- local targets_table = {}
-        -- for i=1, #s_tmp-1 do
-        --     table.insert(targets_table, {0,0})
-        -- end
-        -- table.insert(targets_table, targets)
-
         self.network:backward(s_tmp, targets)
     end
 
