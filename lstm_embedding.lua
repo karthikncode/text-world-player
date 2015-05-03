@@ -107,16 +107,25 @@ return function(args)
       
         l  = LSTM(n_hid, n_hid)
 
-        lstm = nn.Sequential()        
-        lstm:add(nn.Sequencer(l))
-        lstm:add(nn.SelectTable(args.state_dim))
-        lstm:add(nn.Linear(n_hid, n_hid))
-        lstm:add(nn.Rectifier())
+        lstm = nn.Sequential()    
+
+        lstm_seq = nn.Sequential()
+        lstm_seq:add(nn.Sequencer(l))
+        lstm_seq:add(nn.SelectTable(args.state_dim))
+        lstm_seq:add(nn.Linear(n_hid, n_hid))
+        lstm_seq:add(nn.Rectifier())
+
+        parallel_flows = nn.ParallelTable()
+        for f=1, args.hist_len do
+            parallel_flows:add(lstm_seq:clone())
+        end
 
         local lstm_out = nn.ConcatTable()
-        lstm_out:add(nn.Linear(n_hid, args.n_actions))
-        lstm_out:add(nn.Linear(n_hid, args.n_objects))
+        lstm_out:add(nn.Linear(args.hist_len * n_hid, args.n_actions))
+        lstm_out:add(nn.Linear(args.hist_len * n_hid, args.n_objects))
 
+        lstm:add(parallel_flows)
+        lstm:add(nn.JoinTable(2))
         lstm:add(lstm_out)
         
         if args.gpu >=0 then

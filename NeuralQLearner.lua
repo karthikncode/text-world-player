@@ -128,7 +128,7 @@ function nql:__init(args)
     self.q_max = 1
     self.r_max = 1
 
-    self.w, self.dw = self.network:getParameters()
+    self.w, self.dw = self.network:getParameters()    
     self.dw:zero()
 
     self.deltas = self.dw:clone():fill(0)

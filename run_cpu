@@ -17,8 +17,8 @@ n_replay=1
 
 recurrent=1
 # netfile="\"bow_embedding\"" 
-netfile="\"rnn_embedding\""  
-# netfile="\"lstm_embedding\""  
+# netfile="\"rnn_embedding\""  
+netfile="\"lstm_embedding\""  
 # netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
 
 update_freq=4
