@@ -185,8 +185,8 @@ function nql:getQUpdate(args)
     -- print("S2: ", s2)
     if RECURRENT == 0 then
         q2_max = target_q_net:forward(s2)
-    else
-        local s2_tmp = tensor_to_table(s2)
+    else        
+        local s2_tmp = tensor_to_table(s2, self.state_dim, self.hist_len)
         -- print(s2_tmp)
         q2_max = target_q_net:forward(s2_tmp)
     end
@@ -209,7 +209,8 @@ function nql:getQUpdate(args)
     if RECURRENT == 0 then
         q_all = self.network:forward(s)
     else
-        local s_tmp = tensor_to_table(s)
+        local s_tmp = tensor_to_table(s, self.state_dim, self.hist_len)
+        -- print(s_tmp)
         q_all = self.network:forward(s_tmp)
     end
     
@@ -270,7 +271,7 @@ function nql:qLearnMinibatch()
     if RECURRENT == 0 then     
         self.network:backward(s, targets)
     else
-        local s_tmp = tensor_to_table(s, self.minibatch_size)
+        local s_tmp = tensor_to_table(s, self.state_dim, self.hist_len)
         self.network:backward(s_tmp, targets)
     end
 
@@ -427,7 +428,9 @@ function nql:greedy(state)
     if RECURRENT == 0 then
         q = self.network:forward(state)
     else
-        local state_tmp = tensor_to_table(state)
+        -- print("state", state)
+        local state_tmp = tensor_to_table(state, self.state_dim, self.hist_len)
+        -- print("state_tmp", state_tmp)
         q = self.network:forward(state_tmp)
     end
 

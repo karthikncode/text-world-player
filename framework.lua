@@ -215,7 +215,11 @@ function convert_text_to_ordered_list(input_text)
 			local word = list_words[i]
 			word = word:lower()
 			--ignore words not in vocab
-			vector[cnt] = symbol_mapping[word]
+			if symbol_mapping[word] then	
+				vector[cnt] = symbol_mapping[word]
+			else
+				print(word .. ' not in vocab')
+			end
 			cnt=cnt+1
 		end
 	end

@@ -2,7 +2,7 @@
 require 'nn'
 require 'nnx'
 require 'nngraph'
-require 'recurrent.lua'
+-- require 'recurrent.lua'
 
 --require 'cunn'
 -- IMP if args is not passed, it takes from global 'args'
@@ -21,15 +21,25 @@ return function(args)
         )
 
         rnn = nn.Sequential()
-        rnn:add(nn.Sequencer(r))
-        rnn:add(nn.SelectTable(args.state_dim))
-        rnn:add(nn.Linear(n_hid, n_hid))
-        rnn:add(nn.Rectifier())
+
+        rnn_seq = nn.Sequential()
+        rnn_seq:add(nn.Sequencer(r))
+        rnn_seq:add(nn.SelectTable(args.state_dim))
+        rnn_seq:add(nn.Linear(n_hid, n_hid))
+        rnn_seq:add(nn.Rectifier())
+
+        parallel_flows = nn.ParallelTable()
+        for f=1, args.hist_len do
+            parallel_flows:add(rnn_seq:clone("weight","bias"))
+        end
+
 
         local rnn_out = nn.ConcatTable()
-        rnn_out:add(nn.Linear(n_hid, args.n_actions))
-        rnn_out:add(nn.Linear(n_hid, args.n_objects))
+        rnn_out:add(nn.Linear(args.hist_len * n_hid, args.n_actions))
+        rnn_out:add(nn.Linear(args.hist_len * n_hid, args.n_objects))
 
+        rnn:add(parallel_flows)
+        rnn:add(nn.JoinTable(2))
         rnn:add(rnn_out)
         
         if args.gpu >=0 then

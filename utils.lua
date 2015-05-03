@@ -46,12 +46,54 @@ function str_to_table(str)
 end
 
 -- IMP: very specific function - do not use for arbitrary tensors
-function tensor_to_table(tensor, batch_size)
-  batch_size = batch_size or tensor:size(1)
-  local t2 = {}
-  for i=1,tensor:size(2) do
-    t2[i] = tensor[{{}, {i}}]:reshape(batch_size)
+function tensor_to_table(tensor, state_dim, hist_len)
+  batch_size = tensor:size(1)
+  local NULL_INDEX = #symbols+1 
+
+  -- convert 0 to NULL_INDEX (this happens when hist doesn't go back as far as hist_len in chain)
+  for i=1, tensor:size(1) do
+    for j=1, tensor:size(2) do
+      if tensor[i][j] == 0 then
+        tensor[i][j] = NULL_INDEX
+      end
+    end
   end
+
+
+  local t2 = {}
+
+  if tensor:size(1) == hist_len then
+    -- hacky: this is testing case. They don't seem to have a consistent representation
+    -- so this will have to do for now.
+    for j=1, tensor:size(1) do
+      t2_tmp = {}
+      for i=1, tensor:size(2) do
+        t2_tmp[i%state_dim] = tensor[{{j}, {i}}]:reshape(1)
+      end
+      t2_tmp[state_dim] = t2_tmp[0]
+      t2_tmp[0] = nil
+      table.insert(t2, t2_tmp)
+    end
+  else
+    for j=1, hist_len do
+      t2_tmp = {}
+      for i=(j-1)*state_dim+1,j*state_dim do
+        t2_tmp[i%state_dim] = tensor[{{}, {i}}]:reshape(batch_size)   
+      end
+      t2_tmp[state_dim] = t2_tmp[0]
+      t2_tmp[0] = nil
+      table.insert(t2, t2_tmp)
+    end
+  end
+
+  -- for i=1, #t2 do
+  --   for j=1, #t2[1] do
+  --     for k=1, t2[i][j]:size(1) do
+  --       assert(t2[i][j][k] ~= 0, "0 element at"..i..' '..j..' '..k)
+  --     end
+  --   end
+  -- end
+
   return t2
 end
 

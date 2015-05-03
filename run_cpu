@@ -5,7 +5,7 @@
 
 FRAMEWORK="alewrap"
 
-hist_len=1
+hist_len=2
 max_steps=100
 minibatch_size=64
 quest_levels=1
@@ -17,8 +17,8 @@ n_replay=1
 
 recurrent=1
 # netfile="\"bow_embedding\"" 
-# netfile="\"rnn_embedding\""  
-netfile="\"lstm_embedding\""  
+netfile="\"rnn_embedding\""  
+# netfile="\"lstm_embedding\""  
 # netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
 
 update_freq=4
@@ -34,7 +34,7 @@ eps_end=0.1
 eps_endt=replay_memory
 lr=0.005
 # exp_folder="logs/exp_doublevector_hist"$hist_len"/"
-exp_folder="logs/test_recurrent2/"
+exp_folder="logs/test_recurrent_hist/"
 agent_type=$exp_folder"DQN3_0_1"
 agent_name=$agent_type"_"$1"_FULL_Y"
 state_dim=20

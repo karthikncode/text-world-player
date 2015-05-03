@@ -87,7 +87,6 @@ login('root', 'root')
 
 framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
 
-
 --- General setup.
 if opt.agent_params then
     opt.agent_params = str_to_table(opt.agent_params)
