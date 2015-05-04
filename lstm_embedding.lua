@@ -10,7 +10,7 @@ return function(args)
 
     rho = args.state_dim --number of backprop steps
     n_hid = 10
-    nIndex = 10000 -- vocab size 
+    nIndex = 100 -- vocab size 
 
     -- overriding LSTM factory functions below
 

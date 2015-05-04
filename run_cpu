@@ -5,9 +5,9 @@
 
 FRAMEWORK="alewrap"
 
-hist_len=2
+hist_len=1
 max_steps=100
-minibatch_size=64
+minibatch_size=32
 quest_levels=1
 game_num=$1
 game_path=$PWD"/roms/"
@@ -32,9 +32,9 @@ initial_priority="false"
 replay_memory=1000000
 eps_end=0.1
 eps_endt=replay_memory
-lr=0.005
+lr=0.0005
 # exp_folder="logs/exp_doublevector_hist"$hist_len"/"
-exp_folder="logs/test_recurrent_hist/"
+exp_folder="logs/test_lstm/"
 agent_type=$exp_folder"DQN3_0_1"
 agent_name=$agent_type"_"$1"_FULL_Y"
 state_dim=20
