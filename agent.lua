@@ -77,6 +77,7 @@ if not dqn then
     require 'NeuralQLearner'
     require 'TransitionTable'
     require 'Rectifier'
+    require 'Embedding'
 end
 
 --  agent login
@@ -109,7 +110,9 @@ if opt.agent_params then
     end
 end	
 print("state_dim", opt.agent_params.state_dim)
+
 local agent = dqn[opt.agent](opt.agent_params) -- calls dqn.NeuralQLearner:init
+
 
 -- override print to always flush the output
 local old_print = print
@@ -267,6 +270,9 @@ while step < opt.steps do
             step, step*opt.actrep, total_reward, agent.ep, agent.lr, time_dif,
             training_rate, eval_time, opt.actrep*opt.eval_steps/eval_time,
             nepisodes, nrewards))
+
+
+
         print('Testing Ends ... ')
     end
 
@@ -297,6 +303,16 @@ while step < opt.steps do
             local nets = {network=w:clone():float()}
             torch.save(filename..'.params.t7', nets, 'ascii')
         end
+
+        -- save word embeddings
+        embedding_mat = EMBEDDING:forward(torch.range(1, #symbols+1))
+        embedding_save = {}
+        for i=1, embedding_mat:size(1)-1 do 
+            embedding_save[symbols[i]] = embedding_mat[i]
+        end
+        embedding_save["NULL"] = embedding_mat[embedding_mat:size(1)]        
+        torch.save(filename..'.embeddings.t7', {embeddings = embedding_save})
+
         agent.valid_s, agent.valid_a, agent.valid_r, agent.valid_s2,
             agent.valid_term = s, a, r, s2, term
         agent.w, agent.dw, agent.g, agent.g2, agent.delta, agent.delta2,

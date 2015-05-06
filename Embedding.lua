@@ -1,49 +1,37 @@
+require 'nn'
+
+-- override for debug
+-- function nn.LookupTable:accGradParameters(input, gradOutput, scale)
+-- 	-- print(input, gradOutput, scale)
+-- 	-- print("before", self.gradWeight:norm())
+--    scale = scale or 1
+--    if input:dim() == 1 then
+--       self.nBackward = self.nBackward + 1
+--       for i=1,input:size(1) do
+--          local k = input[i]
+--          self.inputs[k] = (self.inputs[k] or 0) + 1
+--          self.gradWeight:select(1, k):add(scale, gradOutput:select(1, i))
+--       end
+--    elseif input:dim() == 2 then
+--       self.nBackward = self.nBackward + input:size(1)
+--       for i=1,input:size(1) do
+--          local input = input:select(1, i)
+--          local gradOutput = gradOutput:select(1, i)
+--          for j=1,input:size(1) do
+--             local k = input[j]
+--             self.inputs[k] = (self.inputs[k] or 0) + 1
+--             self.gradWeight:select(1, k):add(scale, gradOutput:select(1, j))
+--          end
+--       end
+--    end
+--    -- print("after", self.gradWeight:norm())   
+-- end
 
 
 
-local Embedding, parent = torch.class('Embedding', 'nn.Module')
-
-function Embedding:__init(inputSize, outputSize)
-  parent.__init(self)
-  self.outputSize = outputSize
-  self.weight = torch.Tensor(inputSize, outputSize)
-  self.gradWeight = torch.Tensor(inputSize, outputSize)
-end
-
-function Embedding:updateOutput(input)
-  self.output:resize(input:size(1), self.outputSize)
-  for i = 1, input:size(1) do
-    if input[i] == 0 then
-      --this is when input is nil (sentence length is smaller than max size)
-      self.output[i]:copy(torch.zeros(self.outputSize))
-    else
-      self.output[i]:copy(self.weight[input[i]])
-    end
-  end
-  -- print("embedding output", self.output:size())
-  return self.output
-end
-
-function Embedding:updateGradInput(input, gradOutput)
-  if self.gradInput then
-    self.gradInput:resize(input:size())
-    return self.gradInput
-  end
-end
-
-function Embedding:accGradParameters(input, gradOutput, scale)
-  scale = scale or 1
-  if scale == 0 then
-    self.gradWeight:zero()
-  end
-  for i = 1, input:size(1) do
-    local word = input[i]
-    if input[i] ~= 0 then
-      -- ignore when input is nil (sentence length is smaller than max size)
-      self.gradWeight[word]:add(gradOutput[i])
-    end
-  end
-end
-
--- we do not need to accumulate parameters when sharing
-Embedding.sharedAccUpdateGradParameters = Embedding.accUpdateGradParameters
+n_hid = 100
+nIndex = 128 -- vocab size 
+EMBEDDING = nn.LookupTable(nIndex, n_hid)
+local norm = EMBEDDING.weight:sum()/nIndex
+EMBEDDING.weight:div(norm) -- zero out initial weights
+print("init embedding sum",norm)

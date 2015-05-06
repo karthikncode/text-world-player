@@ -10,7 +10,11 @@ local trans = torch.class('dqn.TransitionTable')
 
 
 function trans:__init(args)
-    self.stateDim = args.stateDim
+    if vector_function == convert_text_to_ordered_list2 then
+        self.stateDim = args.stateDim * 2 -- @karthik: double state-dim for desc and quest separately
+    else
+        self.stateDim  = args.stateDim -- State dimensionality.
+    end
     self.numActions = args.numActions
     self.numObjects = args.numObjects
     self.histLen = args.histLen

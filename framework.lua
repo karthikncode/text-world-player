@@ -204,6 +204,7 @@ end
 
 -- for recurrent and other networks
 -- assumes that the symbol mapping has already been created
+-- STATE_DIM = max desc/quest length
 function convert_text_to_ordered_list(input_text)
 	local NULL_INDEX = #symbols + 1
 	local vector = torch.ones(STATE_DIM) * NULL_INDEX
@@ -227,9 +228,38 @@ function convert_text_to_ordered_list(input_text)
 	return vector
 end
 
+-- for recurrent and other networks
+-- Separate lists for description and quest.
+-- STATE_DIM = max desc/quest length
+function convert_text_to_ordered_list2(input_text)
+	local NULL_INDEX = #symbols + 1
+	local vector = torch.ones(2 * STATE_DIM) * NULL_INDEX
+	local REVERSE = true
+	for j=1, 2 do
+		cnt=1
+		line = input_text[j]
+		local list_words = split(line, "%a+")
+		for i=1,#list_words do			
+			local word = list_words[i]
+			word = word:lower()
+			if REVERSE then cnt2 = STATE_DIM+1-cnt else cnt2 = cnt end
+			--ignore words not in vocab
+			if symbol_mapping[word] then					
+				vector[(j-1)*STATE_DIM + cnt2] = symbol_mapping[word]
+			else
+				print(word .. ' not in vocab')
+			end
+			cnt=cnt+1
+		end
+	end
+	-- return reverse_tensor(vector)
+	return vector
+end
+
 -------------------------VECTOR function -------------------------
 if RECURRENT == 1 then
 	vector_function = convert_text_to_ordered_list
+	-- vector_function = convert_text_to_ordered_list2
 else
 	vector_function = convert_text_to_bow2
 end

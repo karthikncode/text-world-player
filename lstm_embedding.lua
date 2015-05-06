@@ -2,15 +2,12 @@
 require 'nn'
 require 'rnn'  -- IMP: dont use LSTM package from nnx - buggy
 require 'nngraph'
+require 'embedding'
 
 --require 'cunn'
 -- IMP if args is not passed, it takes from global 'args'
 
 return function(args)
-
-    rho = args.state_dim --number of backprop steps
-    n_hid = 10
-    nIndex = 100 -- vocab size 
 
     -- overriding LSTM factory functions below
 
@@ -25,7 +22,7 @@ return function(args)
        local concat = nn.ConcatTable()
        local concat2 = nn.ConcatTable()
        local input_transform = nn.ParallelTable()
-       input_transform:add(nn.LookupTable(nIndex, n_hid))
+       input_transform:add(EMBEDDING)
        input_transform:add(nn.Identity())
        input_transform:add(nn.Identity())
 
@@ -111,29 +108,35 @@ return function(args)
 
         lstm_seq = nn.Sequential()
         lstm_seq:add(nn.Sequencer(l))
-        lstm_seq:add(nn.SelectTable(args.state_dim))
-        lstm_seq:add(nn.Linear(n_hid, n_hid))
-        lstm_seq:add(nn.Rectifier())
+        
+        -- lstm_seq:add(nn.SelectTable(args.state_dim))
+        -- lstm_seq:add(nn.Linear(n_hid, n_hid))
+
+        -- alternative - considering outputs from all timepoints
+        lstm_seq:add(nn.JoinTable(2))
+        lstm_seq:add(nn.Linear(args.state_dim * n_hid, n_hid))
+
+        lstm_seq:add(nn.Sigmoid())
 
         parallel_flows = nn.ParallelTable()
-        for f=1, args.hist_len do
-            parallel_flows:add(lstm_seq:clone())
+        for f=1, args.hist_len * args.state_dim_multiplier do
+            -- parallel_flows:add(lstm_seq:clone("weight","bias","gradWeight", "gradBias", "recurrentModule")) -- TODO share 'weight' and 'bias'
+            parallel_flows:add(lstm_seq) -- TODO share 'weight' and 'bias'
         end
 
         local lstm_out = nn.ConcatTable()
-        lstm_out:add(nn.Linear(args.hist_len * n_hid, args.n_actions))
-        lstm_out:add(nn.Linear(args.hist_len * n_hid, args.n_objects))
+        lstm_out:add(nn.Sequential():add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_actions)):add(nn.SoftMax()))
+        lstm_out:add(nn.Sequential():add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_objects)):add(nn.SoftMax()))
 
         lstm:add(parallel_flows)
         lstm:add(nn.JoinTable(2))
         lstm:add(lstm_out)
+
         
         if args.gpu >=0 then
             lstm:cuda()
         end    
         return lstm
-
     end
-
     return create_network(args)
 end

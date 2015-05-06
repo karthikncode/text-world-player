@@ -9,6 +9,11 @@ local nql = torch.class('dqn.NeuralQLearner')
 
 
 function nql:__init(args)
+    if vector_function == convert_text_to_ordered_list2 then
+        self.state_dim_multiplier = 2
+    else
+        self.state_dim_multiplier = 1
+    end
     self.state_dim  = args.state_dim -- State dimensionality.
     self.actions    = args.actions
     self.n_actions  = #self.actions
@@ -297,6 +302,18 @@ function nql:qLearnMinibatch()
     -- accumulate update
     self.deltas:mul(0):addcdiv(self.lr, self.dw, self.tmp)
     self.w:add(self.deltas)
+
+    -- print(self.network:parameters())
+
+    -- -- print(self.deltas:size(), self.w:size(), self.dw:size())
+    -- -- print(self.deltas:eq(0):sum(), self.w:eq(0):sum(), self.dw:eq(0):sum())
+    -- EMBEDDING:updateParameters(self.lr)
+    -- print("Deltas: ", self.deltas:norm())
+    -- print("W:", self.w:norm())
+    -- print("Embedding:",EMBEDDING.weight:norm())
+    -- print("Embedding grad weight:",EMBEDDING.gradWeight:norm())
+    -- print("Embedding2:",EMBEDDING:forward(torch.range(1, #symbols+1)):norm())
+    -- assert(EMBEDDING.gradWeight:norm() > 0)
 end
 
 

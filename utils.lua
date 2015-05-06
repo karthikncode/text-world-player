@@ -65,17 +65,22 @@ function tensor_to_table(tensor, state_dim, hist_len)
   if tensor:size(1) == hist_len then
     -- hacky: this is testing case. They don't seem to have a consistent representation
     -- so this will have to do for now.
+    -- print('testing' , tensor:size())
     for j=1, tensor:size(1) do
-      t2_tmp = {}
-      for i=1, tensor:size(2) do
-        t2_tmp[i%state_dim] = tensor[{{j}, {i}}]:reshape(1)
+      for k=1, tensor:size(2)/state_dim do
+        t2_tmp = {}
+        for i=(k-1)*state_dim+1, k*state_dim do
+          t2_tmp[i%state_dim] = tensor[{{j}, {i}}]:reshape(1)
+        end
+        t2_tmp[state_dim] = t2_tmp[0]
+        t2_tmp[0] = nil
+        table.insert(t2, t2_tmp)
       end
-      t2_tmp[state_dim] = t2_tmp[0]
-      t2_tmp[0] = nil
-      table.insert(t2, t2_tmp)
     end
   else
-    for j=1, hist_len do
+    -- print('training' , tensor:size())
+    -- print(tensor[{{1}, {}}])
+    for j=1, tensor:size(2)/state_dim do
       t2_tmp = {}
       for i=(j-1)*state_dim+1,j*state_dim do
         t2_tmp[i%state_dim] = tensor[{{}, {i}}]:reshape(batch_size)   
