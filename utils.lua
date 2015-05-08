@@ -87,7 +87,7 @@ function tensor_to_table(tensor, state_dim, hist_len)
       end
       t2_tmp[state_dim] = t2_tmp[0]
       t2_tmp[0] = nil
-      table.insert(t2, t2_tmp)
+      table.insert(t2, t2_tmp)   
     end
   end
 

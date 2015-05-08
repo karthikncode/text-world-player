@@ -304,7 +304,6 @@ function nql:qLearnMinibatch()
     self.w:add(self.deltas)
 
     -- print(self.network:parameters())
-
     -- -- print(self.deltas:size(), self.w:size(), self.dw:size())
     -- -- print(self.deltas:eq(0):sum(), self.w:eq(0):sum(), self.dw:eq(0):sum())
     -- EMBEDDING:updateParameters(self.lr)

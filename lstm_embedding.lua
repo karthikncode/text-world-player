@@ -120,8 +120,11 @@ return function(args)
 
         parallel_flows = nn.ParallelTable()
         for f=1, args.hist_len * args.state_dim_multiplier do
-            -- parallel_flows:add(lstm_seq:clone("weight","bias","gradWeight", "gradBias", "recurrentModule")) -- TODO share 'weight' and 'bias'
-            parallel_flows:add(lstm_seq) -- TODO share 'weight' and 'bias'
+            if f > 1 then
+                parallel_flows:add(lstm_seq:clone("weight","bias","gradWeight", "gradBias")) -- TODO share 'weight' and 'bias'
+            else                
+                parallel_flows:add(lstm_seq) -- TODO share 'weight' and 'bias'
+            end
         end
 
         local lstm_out = nn.ConcatTable()

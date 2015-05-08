@@ -6,7 +6,14 @@ local DEBUG = false
 local DEFAULT_REWARD = -0.05
 local STEP_COUNT = 0 -- count the number of steps in current episode
 
-quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
+--Simple quests
+-- quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
+
+--(somewhat) complex quests
+quests = {'You are not sleepy but hungry.',
+					'You are not hungry but sleepy.',
+					'You are not getting fat but bored.',
+					'You are not bored but getting fat.'} 
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
 quest_checklist = {}
 rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
@@ -234,7 +241,7 @@ end
 function convert_text_to_ordered_list2(input_text)
 	local NULL_INDEX = #symbols + 1
 	local vector = torch.ones(2 * STATE_DIM) * NULL_INDEX
-	local REVERSE = true
+	local REVERSE = true --reverse the order of words to have padding in beginning
 	for j=1, 2 do
 		cnt=1
 		line = input_text[j]
@@ -258,8 +265,8 @@ end
 
 -------------------------VECTOR function -------------------------
 if RECURRENT == 1 then
-	vector_function = convert_text_to_ordered_list
-	-- vector_function = convert_text_to_ordered_list2
+	-- vector_function = convert_text_to_ordered_list
+	vector_function = convert_text_to_ordered_list2
 else
 	vector_function = convert_text_to_bow2
 end

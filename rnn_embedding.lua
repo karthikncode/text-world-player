@@ -73,19 +73,22 @@ return function(args)
 
         rnn_seq = nn.Sequential()
         rnn_seq:add(nn.Sequencer(r))
-        -- rnn_seq:add(nn.SelectTable(args.state_dim))
-        -- rnn_seq:add(nn.Linear(n_hid, n_hid))
+        rnn_seq:add(nn.SelectTable(args.state_dim))
+        rnn_seq:add(nn.Linear(n_hid, n_hid))
         
         -- alternative - considering outputs from all timepoints
-        rnn_seq:add(nn.JoinTable(2))
-        rnn_seq:add(nn.Linear(args.state_dim * n_hid, n_hid))
+        -- rnn_seq:add(nn.JoinTable(2))
+        -- rnn_seq:add(nn.Linear(args.state_dim * n_hid, n_hid))
 
         rnn_seq:add(nn.Rectifier())
 
         parallel_flows = nn.ParallelTable()
         for f=1, args.hist_len * args.state_dim_multiplier do
-            -- parallel_flows:add(rnn_seq:clone("weight","bias", "gradWeight", "gradBias"))
-            parallel_flows:add(rnn_seq)  
+            if f > 1 then
+                parallel_flows:add(rnn_seq:clone("weight","bias", "gradWeight", "gradBias"))
+            else
+                parallel_flows:add(rnn_seq)  
+            end
         end
 
 
