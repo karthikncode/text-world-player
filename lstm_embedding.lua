@@ -115,7 +115,8 @@ return function(args)
         -- alternative - considering outputs from all timepoints
         lstm_seq:add(nn.JoinTable(2))
         lstm_seq:add(nn.Linear(args.state_dim * n_hid, n_hid))
-
+        lstm_seq:add(nn.Sigmoid())
+        lstm_seq:add(nn.Linear(n_hid, n_hid))
         lstm_seq:add(nn.Sigmoid())
 
         parallel_flows = nn.ParallelTable()
@@ -128,8 +129,8 @@ return function(args)
         end
 
         local lstm_out = nn.ConcatTable()
-        lstm_out:add(nn.Sequential():add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_actions)):add(nn.SoftMax()))
-        lstm_out:add(nn.Sequential():add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_objects)):add(nn.SoftMax()))
+        lstm_out:add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_actions))
+        lstm_out:add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_objects))
 
         lstm:add(parallel_flows)
         lstm:add(nn.JoinTable(2))

@@ -81,6 +81,8 @@ return function(args)
         -- rnn_seq:add(nn.Linear(args.state_dim * n_hid, n_hid))
 
         rnn_seq:add(nn.Rectifier())
+        rnn_seq:add(nn.Linear(n_hid, n_hid))
+        rnn_seq:add(nn.Rectifier())
 
         parallel_flows = nn.ParallelTable()
         for f=1, args.hist_len * args.state_dim_multiplier do
@@ -93,8 +95,8 @@ return function(args)
 
 
         local rnn_out = nn.ConcatTable()
-        rnn_out:add(nn.Sequential():add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_actions)):add(nn.SoftMax()))
-        rnn_out:add(nn.Sequential():add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_objects)):add(nn.SoftMax()))
+        rnn_out:add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_actions))
+        rnn_out:add(nn.Linear(args.hist_len  * args.state_dim_multiplier * n_hid, args.n_objects))
 
         rnn:add(parallel_flows)
         rnn:add(nn.JoinTable(2))

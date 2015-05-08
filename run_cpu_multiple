@@ -15,9 +15,9 @@ netfile="\"lstm_embedding\""
 for discount in 0.99; do
 	# for lr in 0.00025 0.0005 0.001 0.005 0.01 0.05; do
 	for lr in 0.0005; do
-		for hist_len in 1 2 4; do
+		for hist_len in 1; do
 			((i++))
-			exp_folder="logs/complex_runs_bow/disc_"$discount"_lr_"$lr"_hist_"$hist_len"/"
+			exp_folder="logs/complex_runs_lstm_deep/disc_"$discount"_lr_"$lr"_hist_"$hist_len"/"
 			mkdir -p $exp_folder;
 	    game_num=$((i % $NUM_GAMES + 1))
 			game_path=$PWD"/roms/"
