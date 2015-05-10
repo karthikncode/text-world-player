@@ -3,8 +3,11 @@
 #Usage : ./run_cpu <game_num>
 #game_num is 1, 2, 3 ...
 
+exp_folder="logs/test_lstm_doublevec3/"
+mkdir -p $exp_folder;
+
 FRAMEWORK="alewrap"
-STEP_SIZE=10000 #step size for learn_start, eval, saving, etc.
+STEP_SIZE=5000 #step size for learn_start, eval, saving, etc.
 hist_len=1
 max_steps=100 #max steps  in a single episode
 minibatch_size=32
@@ -16,13 +19,13 @@ agent="NeuralQLearner"
 n_replay=1
 
 recurrent=1
-netfile="\"bow_embedding\"" 
+# netfile="\"bow_embedding\"" 
 # netfile="\"rnn_embedding\""  
-# netfile="\"lstm_embedding\""  
+netfile="\"lstm_embedding\""  
 # netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
 
-update_freq=4
-actrep=4
+update_freq=1
+actrep=1
 discount=0.99
 seed=1
 learn_start=$STEP_SIZE
@@ -31,15 +34,16 @@ pool_frms_size=2
 initial_priority="false"
 replay_memory=1000000
 eps_end=0.1
-eps_endt=replay_memory
+# eps_endt=replay_memory
+eps_endt=10000
 lr=0.0005
 # exp_folder="logs/exp_doublevector_hist"$hist_len"/"
-exp_folder="logs/test_lstm_doublevec/"
+
 agent_type=$exp_folder"DQN3_0_1"
 agent_name=$agent_type"_"$1"_FULL_Y"
 state_dim=20
 ncols=1
-agent_params="lr="$lr",ep=1,ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size="$minibatch_size",rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,target_q=10000,clip_delta=1,min_reward=-1,max_reward=1"
+agent_params="lr="$lr",ep=1,ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size="$minibatch_size",rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,clip_delta=1,min_reward=-1,max_reward=1"
 steps=2000000
 eval_freq=$STEP_SIZE
 eval_steps=$STEP_SIZE

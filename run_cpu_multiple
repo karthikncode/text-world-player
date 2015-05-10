@@ -24,7 +24,7 @@ for discount in 0.99; do
 			env_params="useRGB=true"
 			agent="NeuralQLearner"
 			n_replay=1
-			update_freq=4
+			update_freq=2
 			actrep=4
 			seed=1
 			learn_start=10000

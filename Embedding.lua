@@ -32,6 +32,8 @@ require 'nn'
 n_hid = 100
 nIndex = 128 -- vocab size 
 EMBEDDING = nn.LookupTable(nIndex, n_hid)
-local norm = EMBEDDING.weight:sum()/nIndex
-EMBEDDING.weight:div(norm) -- zero out initial weights
-print("init embedding sum",norm)
+-- local norm = EMBEDDING.weight:sum()/nIndex
+-- EMBEDDING.weight:div(norm) -- zero out initial weights
+-- print("init embedding sum",norm)
+
+EMBEDDING.weight[#symbols+1] = torch.zeros(n_hid) -- NULL_INDEX
