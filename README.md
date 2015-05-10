@@ -1,4 +1,4 @@
-Requirements: 'socket' package for client connection.
+Requirements: 'luasocket' package for client connection.
 'rnn' package for LSTM (nnx version is buggy with Sequencer for batches)
 
 Checks:
