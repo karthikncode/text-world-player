@@ -3,7 +3,7 @@ require 'utils'
 local underscore = require 'underscore'
 local DEBUG = false
 
-local DEFAULT_REWARD = -0.05
+local DEFAULT_REWARD = -0.01
 local STEP_COUNT = 0 -- count the number of steps in current episode
 
 --Simple quests

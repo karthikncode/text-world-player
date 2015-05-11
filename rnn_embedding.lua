@@ -2,8 +2,6 @@
 require 'nn'
 require 'nnx'
 require 'nngraph'
-require 'embedding'
--- require 'recurrent.lua'
 
 --require 'cunn'
 -- IMP if args is not passed, it takes from global 'args'

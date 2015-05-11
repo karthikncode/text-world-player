@@ -2,7 +2,6 @@
 require 'nn'
 require 'rnn'  -- IMP: dont use LSTM package from nnx - buggy
 require 'nngraph'
-require 'embedding'
 
 --require 'cunn'
 -- IMP if args is not passed, it takes from global 'args'

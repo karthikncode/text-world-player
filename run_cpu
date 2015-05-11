@@ -3,13 +3,13 @@
 #Usage : ./run_cpu <game_num>
 #game_num is 1, 2, 3 ...
 
-exp_folder="logs/test_lstm_doublevec3/"
+exp_folder="logs/test_bow_doublevec4/"
 mkdir -p $exp_folder;
 
 FRAMEWORK="alewrap"
-STEP_SIZE=5000 #step size for learn_start, eval, saving, etc.
+STEP_SIZE=1000 #step size for learn_start, eval, saving, etc.
 hist_len=1
-max_steps=100 #max steps  in a single episode
+max_steps=50 #max steps  in a single episode
 minibatch_size=32
 quest_levels=1
 game_num=$1
@@ -18,10 +18,10 @@ env_params="useRGB=true"
 agent="NeuralQLearner"
 n_replay=1
 
-recurrent=1
-# netfile="\"bow_embedding\"" 
+recurrent=0
+netfile="\"bow_embedding\"" 
 # netfile="\"rnn_embedding\""  
-netfile="\"lstm_embedding\""  
+# netfile="\"lstm_embedding\""  
 # netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
 
 update_freq=1
@@ -33,9 +33,9 @@ pool_frms_type="\"max\""
 pool_frms_size=2
 initial_priority="false"
 replay_memory=1000000
-eps_end=0.1
+eps_end=0.2
 # eps_endt=replay_memory
-eps_endt=10000
+eps_endt=50000
 lr=0.0005
 # exp_folder="logs/exp_doublevector_hist"$hist_len"/"
 
@@ -57,4 +57,4 @@ num_threads=1
 args="-framework $FRAMEWORK -recurrent $recurrent -game_path $game_path -name $agent_name -env_params $env_params -agent $agent -agent_params $agent_params -steps $steps -eval_freq $eval_freq -eval_steps $eval_steps -prog_freq $prog_freq -save_freq $save_freq -actrep $actrep -gpu $gpu -random_starts $random_starts -pool_frms $pool_frms -seed $seed -threads $num_threads"
 echo $args
 
-th agent.lua $args -saveNetworkParams -exp_folder $exp_folder  -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim;
+th agent.lua $args -saveNetworkParams -exp_folder $exp_folder  -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim -max_steps $max_steps;
