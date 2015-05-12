@@ -6,7 +6,10 @@ vec = stats.embeddings
 
 --normalize
 for i, val in pairs(vec) do
-	vec[i]:div(vec[i]:norm())
+	local norm = vec[i]:norm()
+	if norm > 0 then
+		vec[i]:div(norm)
+	end
 end
 
 function dot(a, b)
@@ -29,8 +32,8 @@ function nearest_neighbors()
 	end
 end
 
-function NN(a)
-	for i, v in pairs(vec) do
-		if i ~= a then
-			
-end
+-- function NN(a)
+-- 	for i, v in pairs(vec) do
+-- 		if i ~= a then
+
+-- end

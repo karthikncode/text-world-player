@@ -4,23 +4,27 @@ local underscore = require 'underscore'
 local DEBUG = false
 
 local DEFAULT_REWARD = -0.01
+local JUNK_CMD_REWARD = -0.1
 local STEP_COUNT = 0 -- count the number of steps in current episode
 
 --Simple quests
--- quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
+quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
 
 --(somewhat) complex quests
-quests = {'You are not sleepy but hungry.',
-					'You are not hungry but sleepy.',
-					'You are not getting fat but bored.',
-					'You are not bored but getting fat.'} 
+-- quests = {'You are not sleepy but hungry.',
+-- 					'You are not hungry but sleepy.',
+-- 					'You are not getting fat but bored.',
+-- 					'You are not bored but getting fat.'} 
+
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
 quest_checklist = {}
+mislead_quest_checklist = {}
 rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
 
 actions = {"eat", "sleep", "watch", "exercise", "go"} -- hard code in
 objects = {'north','south','east','west'} -- read rest from build file
 
+extra_vocab = {'not','but'} -- words that are necessary for vocab but not in other text
 symbols = {}
 symbol_mapping = {}
 
@@ -39,6 +43,12 @@ function random_teleport()
 	end
 end
 
+function get_quest_text(quest_num) 	
+	-- return quests[quest_num]  --simple quests
+	return "Not " .. quests[mislead_quest_checklist[1]] .. ' but ' .. quests[quest_num] --randomized complex quests
+end
+
+
 function random_quest()
 	indxs = torch.randperm(#quests)
 	for i=1,QUEST_LEVELS do
@@ -46,8 +56,15 @@ function random_quest()
 		-- local quest_index = torch.random(1, #quests)
 		quest_checklist[#quest_checklist+1] = quest_index
 	end
+
+	--misleading quests
+	mislead_quest_checklist[1] = indxs[#indxs]
+	for i=1, #quest_checklist-1 do
+		mislead_quest_checklist[i+1] = indxs[i]
+	end
+
 	if DEBUG then
-		print("Start quest", quests[quest_checklist[1]], quest_actions[quest_checklist[1]])
+		print("Start quest", get_quest_text(quest_checklist[1]), quest_actions[quest_checklist[1]])
 	end
 end
 
@@ -65,17 +82,16 @@ function parse_game_output(text)
 	-- extract REWARD if it exists
 	-- text is a list of sentences
 	local reward = nil
-	local text_to_agent = {current_room_description, quests[quest_checklist[1]]}
+	local text_to_agent = {current_room_description, get_quest_text(quest_checklist[1])}
 	for i=1, #text do
 		if i < #text  and string.match(text[i], '<EOM>') then
-			text_to_agent = {current_room_description, quests[quest_checklist[1]]}
+			text_to_agent = {current_room_description, get_quest_text(quest_checklist[1])}
 		elseif string.match(text[i], "REWARD") then
 			if string.match(text[i], quest_actions[quest_checklist[1]]) then
 				reward = tonumber(string.match(text[i], "%d+"))
 			end
-		else
-			--IMP: only description and quest are necessary (for now)
-			--table.insert(text_to_agent, text[i])
+		elseif string.match(text[i], 'not available') or string.match(text[i], 'not find') then
+				reward = JUNK_CMD_REWARD
 		end
 	end
 	if not reward then
@@ -100,6 +116,7 @@ end
 function newGame(gameLogger)
 
 	quest_checklist = {}
+	mislead_quest_checklist = {}
 	STEP_COUNT = 0
 	random_teleport()
 	random_quest()
@@ -141,6 +158,16 @@ function addQuestWordsToVocab()
 	end
 end
 
+function addExtraWordsToVocab()
+	for i, word in pairs(extra_vocab) do
+		word = word:lower()
+		if symbol_mapping[word] == nil then
+			sindx = #symbols + 1
+			symbols[sindx] = word
+			symbol_mapping[word] = sindx
+		end	
+	end
+end
 
 -- read in text data from file with sentences (one sentence per line) - nicely tokenized
 function makeSymbolMapping(filename)
@@ -157,6 +184,7 @@ function makeSymbolMapping(filename)
 		end
 	end
 	addQuestWordsToVocab()
+	addExtraWordsToVocab()
 end
 
 -- Args: {
@@ -215,6 +243,7 @@ end
 function convert_text_to_ordered_list(input_text)
 	local NULL_INDEX = #symbols + 1
 	local vector = torch.ones(STATE_DIM) * NULL_INDEX
+	local REVERSE = true --reverse the order of words to have padding in beginning
 	cnt=1
 	for j=1, 2 do
 		line = input_text[j]
@@ -222,9 +251,10 @@ function convert_text_to_ordered_list(input_text)
 		for i=1,#list_words do			
 			local word = list_words[i]
 			word = word:lower()
+			if REVERSE then cnt2 = STATE_DIM+1-cnt else cnt2 = cnt end
 			--ignore words not in vocab
 			if symbol_mapping[word] then	
-				vector[cnt] = symbol_mapping[word]
+				vector[cnt2] = symbol_mapping[word]
 			else
 				print(word .. ' not in vocab')
 			end
@@ -268,6 +298,7 @@ if RECURRENT == 1 then
 	-- vector_function = convert_text_to_ordered_list
 	vector_function = convert_text_to_ordered_list2
 else
+	-- vector_function = convert_text_to_bow
 	vector_function = convert_text_to_bow2
 end
 -------------------------------------------------------------------
@@ -297,11 +328,12 @@ function getState(logger, print_on)
 	end
 	if reward >= 1 then
 		quest_checklist = underscore.rest(quest_checklist) --remove first element in table		
+		mislead_quest_checklist = underscore.rest(mislead_quest_checklist) --remove first element in table		
 		if #quest_checklist == 0 then
 			--quest has been succesfully finished
 			terminal = true
 		else
-			text[2] = quests[quest_checklist[1]]
+			text[2] = get_quest_text(quest_checklist[1])
 		end
 	end
 

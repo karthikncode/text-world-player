@@ -1,10 +1,12 @@
---BOW 
+
 require 'nn'
 require 'rnn'  -- IMP: dont use LSTM package from nnx - buggy
 require 'nngraph'
 
 --require 'cunn'
 -- IMP if args is not passed, it takes from global 'args'
+
+LSTM_MODEL = nil
 
 return function(args)
 
@@ -143,5 +145,6 @@ return function(args)
         end    
         return lstm
     end
+    LSTM_MODEL = lstm_seq
     return create_network(args)
 end

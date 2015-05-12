@@ -8,6 +8,7 @@ local socket = require 'socket'
 function client_connect(port)
 	client = assert(socket.connect(host, port))
 	client:settimeout(timeout)
+	print("tcp no delay", client:setoption('tcp-nodelay', true))
 end
 
 -- Get data from Evennia

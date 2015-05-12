@@ -17,6 +17,43 @@ function readWordVec(filename)
 end
 
 
+-- override (zero out NULL INDEX)
+function nn.LookupTable:updateOutput(input)
+   -- make sure input is a contiguous torch.LongTensor
+	if (not input:isContiguous()) or torch.type(input) ~= 'torch.LongTensor' then
+	  self._indices = self._indices or torch.LongTensor()
+	  self._indices:resize(input:size()):copy(input)
+	  input = self._indices
+	end
+
+	if input:dim() == 1 then
+	  local nIndex = input:size(1)
+	  self.size[1] = nIndex
+	  self.output:index(self.weight, 1, input)
+	elseif input:dim() == 2 then
+	  local nExample = input:size(1)
+	  local nIndex = input:size(2)
+	  self.batchSize[1] = nExample
+	  self.batchSize[2] = nIndex
+	  
+	  self._inputView = self._inputView or torch.LongTensor()
+	  self._inputView:view(input, -1)
+	  self.output:index(self.weight, 1, self._inputView)
+	  self.output = self.output:view(nExample, nIndex, self.size[2])
+	end
+
+   --zero out NULL_INDEX
+	local output = self.output:clone()	
+  for i=1, input:size(1) do
+		if input[i] == #symbols+1 then
+			output[i]:mul(0)
+		end	
+	end  	
+
+   return output
+end
+
+
 n_hid = 20
 nIndex = 100 -- vocab size 
 EMBEDDING = nn.LookupTable(nIndex, n_hid)
