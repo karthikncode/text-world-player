@@ -12,6 +12,19 @@ function split(s, pattern)
 	return parts
 end
 
+function string.starts(String,Start)
+   return string.sub(String,1,string.len(Start))==Start
+end
+
+function string.ends(String,End)
+   return End=='' or string.sub(String,-string.len(End))==End
+end
+
+function string.trim(s)
+  -- return (s:gsub("^%s*(.-)%s*$", "%1"))
+  return s:match "^%W*(.-)%s*$"
+end
+
 function reverse_tensor(tensor)
   --make sure tensor is 1D
   local n = tensor:size(1)

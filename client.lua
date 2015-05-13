@@ -12,7 +12,7 @@ function client_connect(port)
 end
 
 -- Get data from Evennia
-function data_in()
+function data_in_smallworld()
 	local msg, err = client:receive()
 	local text = {}
 	while not err do
@@ -21,6 +21,24 @@ function data_in()
 	end
 	return text
 end
+
+function data_in_tutorialworld()
+	local msg, err = client:receive()
+	local text = {}
+	while not err do
+		msg = string.gsub(msg, '%[.-m', ' ')
+		text[#text+1] = string.gsub(msg, '{.', '')
+		msg, err = client:receive()
+	end
+	return text
+end
+
+if TUTORIAL_WORLD then
+	data_in = data_in_tutorialworld
+else
+	data_in = data_in_smallworld
+end
+
 
 -- Send data to Evennia
 function data_out(data)

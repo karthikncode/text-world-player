@@ -48,25 +48,28 @@ cmd:option('-threads', 1, 'number of BLAS threads')
 cmd:option('-gpu', -1, 'gpu flag')
 cmd:option('-game_num', 1, 'game number (for parallel game servers)')
 cmd:option('-wordvec_file', 'wordvec.eng' , 'Word vector file')
-
+cmd:option('-tutorial_world', true, 'play tutorial_world')
 
 cmd:text()
 
 local opt = cmd:parse(arg)
 print(opt)
+RECURRENT = opt.recurrent
+QUEST_LEVELS = opt.quest_levels
+STATE_DIM = opt.state_dim
+MAX_STEPS = opt.max_steps
+WORDVEC_FILE = opt.wordvec_file
+TUTORIAL_WORLD = opt.tutorial_world
+print(STATE_DIM)
+print("Tutorial world", TUTORIAL_WORLD)
 
 require 'client'
 require 'utils'
 require 'xlua'
 require 'optim'
 require 'hdf5'
-RECURRENT = opt.recurrent
-QUEST_LEVELS = opt.quest_levels
-STATE_DIM = opt.state_dim
-MAX_STEPS = opt.max_steps
-WORDVEC_FILE = opt.wordvec_file
-print(STATE_DIM)
-local framework = require 'framework'
+
+local framework = require 'framework2'
 
 ---------------------------------------------------------------
 
@@ -88,7 +91,13 @@ print(port)
 client_connect(port)
 login('root', 'root')
 
-framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
+-- framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
+framework.makeSymbolMapping('../text-world/evennia/contrib/tutorial_world/build.ev')
+
+print("#symbols", #symbols)
+print(framework.getObjects())
+
+
 EMBEDDING.weight[#symbols+1]:mul(0) --zero out NULL INDEX vector
 
 --- General setup.
