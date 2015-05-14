@@ -3,7 +3,7 @@
 -- Layer to create quests and act as middle-man between Evennia and Agent
 require 'utils'
 local _ = require 'underscore'
-local DEBUG = true
+local DEBUG = false
 
 local DEFAULT_REWARD = -0.01
 local JUNK_CMD_REWARD = -0.1
@@ -76,7 +76,7 @@ end
 function parse_game_output(text)
 	-- extract REWARD if it exists
 	-- text is a list of sentences
-	print("Parsing", text)
+	-- print("Parsing", text)
 	local reward = nil
 	local text_to_agent = ""
 	local running_text = ""
@@ -279,11 +279,9 @@ function getState(logger, print_on)
 
 
 
-	print('indata', inData)
-	print('indata2', inData2)
+	-- print('indata', inData)
+	-- print('indata2', inData2)
 	local text, reward, exits, objects_available = parse_game_output(inData)		
-
-	print("REWARDSSSSSS",  reward)
 
 	-- look only if command was junk
 	if reward == JUNK_CMD_REWARD then		
@@ -323,7 +321,11 @@ function getState(logger, print_on)
 	end
 
 	if logger then
-		logger:write(table.concat(text, ' '), '\n')
+		if type(text) == 'table' then
+			logger:write(table.concat(text, ' '), '\n')
+		else
+			logger:write(text, '\n')
+		end
 		logger:write('Reward: '..reward, '\n')
 		if terminal then
 			logger:write('****************************\n\n')

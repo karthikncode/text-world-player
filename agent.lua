@@ -151,7 +151,7 @@ local nrewards
 local nepisodes
 local episode_reward
 
-local state, reward, terminal = framework.newGame() 
+local state, reward, terminal, available_objects = framework.newGame() 
 
 print("Started RL based training ...")
 local pos_reward_cnt = 0
@@ -163,7 +163,7 @@ while step < opt.steps do
     step = step + 1
     xlua.progress(step, opt.steps)
 
-    local action_index, object_index = agent:perceive(reward, state, terminal)
+    local action_index, object_index = agent:perceive(reward, state, terminal, nil, nil, available_objects)
 
     if reward > 0 then 
         pos_reward_cnt = pos_reward_cnt + 1
@@ -171,12 +171,12 @@ while step < opt.steps do
         
     -- game over? get next game!
     if not terminal then
-        state, reward, terminal = framework.step(action_index, object_index)
+        state, reward, terminal, available_objects = framework.step(action_index, object_index)
     else
         -- if opt.random_starts > 0 then
-        --     state, reward, terminal = framework.nextRandomGame()
+        --     state, reward, terminal, available_objects = framework.nextRandomGame()
         -- else
-        state, reward, terminal = framework.newGame()
+        state, reward, terminal, available_objects = framework.newGame()
         -- end
     end
 
@@ -201,7 +201,7 @@ while step < opt.steps do
 
         gameLogger = gameLogger or io.open(paths.concat(opt.exp_folder, 'game.log'), 'w')
 
-        state, reward, terminal = framework.newGame(gameLogger)
+        state, reward, terminal, available_objects = framework.newGame(gameLogger)
 
         total_reward = 0
         nrewards = 0
@@ -211,7 +211,7 @@ while step < opt.steps do
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
             xlua.progress(estep, opt.eval_steps)
-            local action_index, object_index, q_func = agent:perceive(reward, state, terminal, true, 0.05)
+            local action_index, object_index, q_func = agent:perceive(reward, state, terminal, true, 0.05, available_objects)
 
              -- print Q function for previous state
             if q_func then
@@ -221,7 +221,7 @@ while step < opt.steps do
             end
 
             -- Play game in test mode (episodes don't end when losing a life)
-		        state, reward, terminal = framework.step(action_index, object_index, gameLogger)
+		        state, reward, terminal, available_objects = framework.step(action_index, object_index, gameLogger)
 
            
 
@@ -237,7 +237,7 @@ while step < opt.steps do
                 total_reward = total_reward + episode_reward
                 episode_reward = 0
                 nepisodes = nepisodes + 1
-                state, reward, terminal = framework.newGame(gameLogger)
+                state, reward, terminal, available_objects = framework.newGame(gameLogger)
             end
         end
 

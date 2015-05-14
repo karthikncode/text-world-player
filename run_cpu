@@ -33,6 +33,7 @@ pool_frms_type="\"max\""
 pool_frms_size=2
 initial_priority="false"
 replay_memory=1000000
+eps=0.2
 eps_end=0.2
 # eps_endt=replay_memory
 eps_endt=50000
@@ -43,7 +44,7 @@ agent_type=$exp_folder"DQN3_0_1"
 agent_name=$agent_type"_"$1"_FULL_Y"
 state_dim=30
 ncols=1
-agent_params="lr="$lr",ep=1,ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size="$minibatch_size",rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,clip_delta=1,min_reward=-1,max_reward=1"
+agent_params="lr="$lr",ep="$eps",ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size="$minibatch_size",rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,clip_delta=1,min_reward=-1,max_reward=1"
 steps=2000000
 eval_freq=$STEP_SIZE
 eval_steps=$STEP_SIZE

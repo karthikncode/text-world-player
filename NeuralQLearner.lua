@@ -336,7 +336,7 @@ function nql:compute_validation_statistics()
 end
 
 
-function nql:perceive(reward, state, terminal, testing, testing_ep)
+function nql:perceive(reward, state, terminal, testing, testing_ep, available_objects)
     -- Preprocess state (will be set to nil if terminal)
     local curState
 
@@ -369,7 +369,7 @@ function nql:perceive(reward, state, terminal, testing, testing_ep)
     local actionIndex = 1
     local objectIndex = 1
     if not terminal then
-        actionIndex, objectIndex, q_func = self:eGreedy(curState, testing_ep)
+        actionIndex, objectIndex, q_func = self:eGreedy(curState, testing_ep, available_objects)
     end
 
     self.transitions:add_recent_action({actionIndex, objectIndex})
@@ -403,7 +403,7 @@ function nql:perceive(reward, state, terminal, testing, testing_ep)
 end
 
 
-function nql:eGreedy(state, testing_ep)
+function nql:eGreedy(state, testing_ep, available_objects)
     self.ep = testing_ep or (self.ep_end +
                 math.max(0, (self.ep_start - self.ep_end) * (self.ep_endt -
                 math.max(0, self.numSteps - self.learn_start))/self.ep_endt))
@@ -411,14 +411,35 @@ function nql:eGreedy(state, testing_ep)
     -- print("EPS:", self.ep)
     -- Epsilon greedy
     if torch.uniform() < self.ep then
-        return torch.random(1, self.n_actions), torch.random(1, self.n_objects)
+        if not available_objects then
+            return torch.random(1, self.n_actions), torch.random(1, self.n_objects)
+        else
+            return torch.random(1, self.n_actions), available_objects[math.random(#available_objects)]
+        end
     else
-        return self:greedy(state)
+        return self:greedy(state, available_objects)
     end
 end
 
 -- Evaluate all actions (with random tie-breaking)
-function nql:getBestRandom(q, N)
+function nql:getBestRandom(q, N, available_objects)
+    -- print("avail OBJECTSSSS",available_objects)
+    if available_objects then
+        local maxq = q[available_objects[1]]
+        local besta = {available_objects[1]}
+        for i=2, #available_objects do 
+            a = available_objects[i]
+            if q[a] > maxq then
+                besta = { a }
+                maxq = q[a]
+            elseif q[a] == maxq then
+                besta[#besta+1] = a
+            end
+        end
+        local r = torch.random(1, #besta)
+        return besta[r], maxq
+    end
+
     local maxq = q[1]
     local besta = {1}
 
@@ -438,7 +459,7 @@ function nql:getBestRandom(q, N)
 end
 
 
-function nql:greedy(state)  
+function nql:greedy(state, available_objects)  
     if self.gpu >= 0 then
         state = state:cuda()
     end
@@ -458,7 +479,7 @@ function nql:greedy(state)
     local best = {}
     local maxq = {}
     best[1], maxq[1] = self:getBestRandom(q[1], self.n_actions)
-    best[2], maxq[2] = self:getBestRandom(q[2], self.n_objects)
+    best[2], maxq[2] = self:getBestRandom(q[2], self.n_objects, available_objects)
 
     self.lastAction = best[1]
     self.lastObject = best[2]
