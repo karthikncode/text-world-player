@@ -3,13 +3,13 @@
 #Usage : ./run_cpu <game_num>
 #game_num is 1, 2, 3 ...
 
-exp_folder="logs/test_bow_singlevec8/"
+exp_folder="logs/tutorial_bow2/"
 mkdir -p $exp_folder;
 
 FRAMEWORK="alewrap"
-STEP_SIZE=1000 #step size for learn_start, eval, saving, etc.
+STEP_SIZE=5000 #step size for learn_start, eval, saving, etc.
 hist_len=1
-max_steps=500 #max steps  in a single episode
+max_steps=250 #max steps  in a single episode
 minibatch_size=32
 quest_levels=1
 game_num=$1
@@ -33,7 +33,7 @@ pool_frms_type="\"max\""
 pool_frms_size=2
 initial_priority="false"
 replay_memory=1000000
-eps=0.2
+eps=1
 eps_end=0.2
 # eps_endt=replay_memory
 eps_endt=50000

@@ -101,7 +101,9 @@ function parse_game_output(text)
 			objects_available = text[i]:gsub('You see:', ''):lower():split(',')
 
 		-- Incorrect command cases
-		elseif string.match(text[i], 'not available') or string.match(text[i], 'not find') then
+		elseif 	 string.match(text[i], 'not available') 
+					or string.match(text[i], 'not find')
+					or string.match(text[i], "You can't get that.") then
 			if reward then
 				reward = reward + JUNK_CMD_REWARD			
 			else
@@ -209,7 +211,7 @@ function convert_text_to_bow(input_text)
 		if symbol_mapping[word] then	
 			vector[symbol_mapping[word]] = vector[symbol_mapping[word]] + 1
 		else
-			print("<"..word .. '> not in vocab')
+			-- print("<"..word .. '> not in vocab')
 		end
 
 	end

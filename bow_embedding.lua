@@ -5,7 +5,7 @@ require 'nn'
 return function(args)
 
     function create_network(args)
-        local n_hid = 20
+        local n_hid = 100
         local mlp = nn.Sequential()
         mlp:add(nn.Reshape(args.hist_len*args.ncols*args.state_dim))
         mlp:add(nn.Linear(args.hist_len*args.ncols*args.state_dim, n_hid))
