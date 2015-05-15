@@ -214,6 +214,7 @@ function makeSymbolMapping(filename)
 	object_mapping['overgrown courtyard'] = object_mapping['courtyard']
 	object_mapping['bridge over the abyss'] = object_mapping['bridge']
 	object_mapping['up the stairs to ruined temple'] = object_mapping['up']
+	object_mapping['back to antechamber'] = object_mapping['antechamber']
 end
 
 -- input_text is just a string with the room description

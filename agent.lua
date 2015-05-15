@@ -215,7 +215,7 @@ while step < opt.steps do
 
              -- print Q function for previous state
             if q_func then
-                -- gameLogger:write(table.tostring(q_func), '\n')
+                gameLogger:write(table.tostring(q_func), '\n')
             else
                 gameLogger:write("Random action\n")
             end

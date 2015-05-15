@@ -394,7 +394,8 @@ function nql:perceive(reward, state, terminal, testing, testing_ep, available_ob
     local actionIndex = 1
     local objectIndex = 1
     if not terminal then
-        actionIndex, objectIndex, q_func = self:eGreedy(curState, testing_ep, available_objects)
+        -- actionIndex, objectIndex, q_func = self:eGreedy(curState, testing_ep, available_objects)
+        actionIndex, objectIndex, q_func = self:sample_action(curState, testing_ep, available_objects)
     end
 
     self.transitions:add_recent_action({actionIndex, objectIndex})
@@ -426,6 +427,40 @@ function nql:perceive(reward, state, terminal, testing, testing_ep, available_ob
         return 0, 0
     end
 end
+
+-- sample an action and object instead of just taking max
+function nql:sample_action(state, testing_ep, available_objects)
+   if self.gpu >= 0 then
+        state = state:cuda()
+    end
+    local q
+    if RECURRENT == 0 then
+        q = self.network:forward(state)
+    else
+        -- print("state", state)
+        local state_tmp = tensor_to_table(state, self.state_dim, self.hist_len)
+        -- print("state_tmp", state_tmp)
+        q = self.network:forward(state_tmp)
+    end
+
+    q[1] = q[1]:float():squeeze():clone()
+    q[2] = q[2]:float():squeeze():clone()
+    q[1]:exp()
+    -- convert available objects to tensor
+    available_objects = table_to_binary_tensor(available_objects, self.n_objects)
+    q[2]:exp()    
+    q[2]:cmul(available_objects:float())
+
+    local sample_a = torch.multinomial(q[1], 1)[1]
+    local sample_o = torch.multinomial(q[2], 1)[1]
+
+    self.lastAction = sample_a
+    self.lastObject = sample_o
+    self.bestq = (q[1][sample_a] + q[2][sample_o])/2
+    
+    return sample_a, sample_o, q
+end
+
 
 
 function nql:eGreedy(state, testing_ep, available_objects)

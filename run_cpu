@@ -3,7 +3,7 @@
 #Usage : ./run_cpu <game_num>
 #game_num is 1, 2, 3 ...
 
-exp_folder="logs/tutorial_bow4/"
+exp_folder="logs/tutorial_bow_sample1/"
 mkdir -p $exp_folder;
 
 FRAMEWORK="alewrap"
