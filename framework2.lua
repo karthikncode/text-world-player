@@ -8,6 +8,7 @@ local DEBUG = false
 local DEFAULT_REWARD = -0.01
 local JUNK_CMD_REWARD = -0.1
 local STEP_COUNT = 0 -- count the number of steps in current episode
+local BRIDGE_PASSED = false
 
 --Simple quests
 -- quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
@@ -25,7 +26,7 @@ local STEP_COUNT = 0 -- count the number of steps in current episode
 
 actions = {'look', 'get', 'light', 'stab', 'climb', 'move', 'go'} -- hard code in
 -- action 'go' is treated specially - no need to output the word 'go' in the command
-objects = {'here'} -- read rest from build file
+objects = {'here', 'foggy tentacles'} -- read rest from build file
 exits = {'east','west','north','south',
 				 'up','down',
 			   'northern path',
@@ -89,10 +90,17 @@ function parse_game_output(text)
 
 		--these are specific lines for reward, objects, exits, etc.	
 		elseif string.match(text[i], "REWARD") then
-			if reward then
-				reward = reward + tonumber(string.match(text[i], "[-%d]+"))
-			else
-				reward = tonumber(string.match(text[i], "[-%d]+"))
+			if not BRIDGE_PASSED or not string.match(text[i], "REWARD_bridge") then
+				if reward then
+					reward = reward + tonumber(string.match(text[i], "[-%d]+"))
+				else
+					reward = tonumber(string.match(text[i], "[-%d]+"))
+				end				
+			end
+
+			--prevent from getting the same reward again for passing the bridge
+			if string.match(text[i], "REWARD_bridge") then
+				BRIDGE_PASSED = true
 			end
 		elseif string.match(text[i], "Exits:") then
 			exits = text[i]:gsub('Exits:', ''):lower():split(',')
@@ -143,8 +151,9 @@ end
 function newGame(gameLogger)
 	data_out("@teleport tut#02") --teleport to Cliff by the coast	
 	data_out("look") 
-	sleep(0.1)
+	sleep(0.5)
 	STEP_COUNT = 0
+	BRIDGE_PASSED = false
 	return getState(gameLogger)
 end
 
@@ -158,7 +167,9 @@ function build_command(action, object, logger)
 	if action == 'go' then
 		return object
 	end
-
+	if not object or not action then
+		print(action, object)
+	end
 	return action .. ' ' ..object
 end
 
@@ -197,6 +208,12 @@ function makeSymbolMapping(filename)
 	for i, object in pairs(objects) do
 		object_mapping[object] = i
 	end
+	
+	--add aliases for exits (not best way but in order to speed up gameplay)
+	object_mapping['ruined temple'] = object_mapping['temple']
+	object_mapping['overgrown courtyard'] = object_mapping['courtyard']
+	object_mapping['bridge over the abyss'] = object_mapping['bridge']
+	object_mapping['up the stairs to ruined temple'] = object_mapping['up']
 end
 
 -- input_text is just a string with the room description
@@ -261,14 +278,19 @@ end
 function findObjectIndices(list)
 	local indices = {}
 	for i,s in pairs(list) do
-		local index = object_mapping[s:trim()]
+		s = s:trim()
+		local index = object_mapping[s]
 		if index then
 			table.insert(indices, index)
 		else
 			print("Object not found:<".. s .. '>')
 		end
 	end
-	return indices
+	if #indices>0 then
+		return indices
+	else
+		return nil
+	end
 end
 
 
@@ -278,8 +300,6 @@ function getState(logger, print_on)
 	while #inData == 0 or not string.match(inData[#inData],'<EOM>') do	
 		TableConcat(inData, data_in())
 	end
-
-
 
 	-- print('indata', inData)
 	-- print('indata2', inData2)
@@ -306,11 +326,15 @@ function getState(logger, print_on)
 		sleep(0.1)
 		if reward > 0 or reward <= -1 then
 			print(text, reward)
-			sleep(10)
+			sleep(0.1)
 		end
 	end
-	if reward >= 1 then
+	if reward >= 10 then
 		terminal = true
+		-- sleep(5)
+	end
+	if reward >=1  then
+		print(text, reward)
 	end
 
 	local vector = vector_function(text)

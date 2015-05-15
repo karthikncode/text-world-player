@@ -35,6 +35,21 @@ function reverse_tensor(tensor)
   return tmp
 end
 
+-- function specific to make available_objects tensor
+function table_to_binary_tensor(t,N)   
+  local tensor
+  if t then
+    tensor = torch.zeros(N)
+    for i,val in pairs(t) do
+      tensor[val] = 1
+    end
+  else
+    tensor = torch.ones(N)
+  end
+  return tensor
+end
+
+
 
 function str_to_table(str)
     if type(str) == 'table' then

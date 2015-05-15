@@ -4,7 +4,7 @@ Copyright (c) 2014 Google Inc.
 See LICENSE file for full terms of limited license.
 ]]
 
-
+require 'utils'
 local nql = torch.class('dqn.NeuralQLearner')
 
 
@@ -171,6 +171,7 @@ function nql:getQUpdate(args)
     r = args.r
     s2 = args.s2
     term = args.term
+    available_objects = args.available_objects
 
     -- The order of calls to forward is a bit odd in order
     -- to avoid unnecessary calls (we only need 2).
@@ -196,8 +197,21 @@ function nql:getQUpdate(args)
         q2_max = target_q_net:forward(s2_tmp)
     end
     
-    q2_max[1] = q2_max[1]:float():max(2)
-    q2_max[2] = q2_max[2]:float():max(2)
+    q2_max[1] = q2_max[1]:float():max(2) --actions
+    q2_max[2] = q2_max[2]:float()
+    
+    q2_max[2]:exp()
+    -- print(q2_max[2])
+    -- print(available_objects)
+
+    q2_max[2]:cmul(available_objects:float())
+    q2_max[2]:log()
+    q2_max[2] = q2_max[2]:max(2)
+
+    -- print(q2_max[2])
+
+    --  best[1], maxq[1] = self:getBestRandom(q[1], self.n_actions)
+    -- best[2], maxq[2] = self:getBestRandom(q[2], self.n_objects, available_objects)
     
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)
     q2 = {}
@@ -234,12 +248,12 @@ function nql:getQUpdate(args)
     delta[2]:add(-1, q[2])
 
     -- @Karthik
-    -- if self.clip_delta then
-    --     delta[1][delta[1]:ge(self.clip_delta)] = self.clip_delta
-    --     delta[1][delta[1]:le(-self.clip_delta)] = -self.clip_delta
-    --     delta[2][delta[2]:ge(self.clip_delta)] = self.clip_delta
-    --     delta[2][delta[2]:le(-self.clip_delta)] = -self.clip_delta
-    -- end
+    if self.clip_delta then
+        delta[1][delta[1]:ge(self.clip_delta)] = self.clip_delta
+        delta[1][delta[1]:le(-self.clip_delta)] = -self.clip_delta
+        delta[2][delta[2]:ge(self.clip_delta)] = self.clip_delta
+        delta[2][delta[2]:le(-self.clip_delta)] = -self.clip_delta
+    end
 
     local targets = {torch.zeros(self.minibatch_size, self.n_actions):float(), 
                     torch.zeros(self.minibatch_size, self.n_objects):float()}
@@ -261,13 +275,13 @@ function nql:qLearnMinibatch()
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
     assert(self.transitions:size() > self.minibatch_size)
 
-    local s, a, o, r, s2, term = self.transitions:sample(self.minibatch_size)
+    local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size)
 
 
     -- print(s, a, o, r, s2, term)
 
     local targets, delta, q2_max = self:getQUpdate{s=s, a=a, o=o, r=r, s2=s2,
-        term=term, update_qmax=true}
+        term=term, update_qmax=true, available_objects=available_objects}
 
     -- zero gradients of parameters
     self.dw:zero()
@@ -289,6 +303,14 @@ function nql:qLearnMinibatch()
                 self.lr_end
     self.lr = math.max(self.lr, self.lr_end)
 
+    --grad normalization
+    local max_norm = 5
+    local grad_norm = self.dw:norm()
+    if grad_norm > max_norm then
+      local scale_factor = max_norm/grad_norm
+      self.dw:mul(scale_factor)
+    end
+
     -- use gradients
     self.g:mul(0.95):add(0.05, self.dw)
     self.tmp:cmul(self.dw, self.dw)
@@ -301,6 +323,7 @@ function nql:qLearnMinibatch()
 
     -- accumulate update
     self.deltas:mul(0):addcdiv(self.lr, self.dw, self.tmp)
+
     self.w:add(self.deltas)
 
     -- print(self.network:parameters())
@@ -317,19 +340,21 @@ end
 
 
 function nql:sample_validation_data()
-    local s, a, o, r, s2, term = self.transitions:sample(self.valid_size)
+    local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.valid_size)
     self.valid_s    = s:clone()
     self.valid_a    = a:clone()
     self.valid_o    = o:clone()
     self.valid_r    = r:clone()
     self.valid_s2   = s2:clone()
     self.valid_term = term:clone()
+    self.valid_available_objects = available_objects:clone()
 end
 
 
 function nql:compute_validation_statistics()
     local targets, delta, q2_max = self:getQUpdate{s=self.valid_s,
-        a=self.valid_a, o = self.valid_o, r=self.valid_r, s2=self.valid_s2, term=self.valid_term}
+        a=self.valid_a, o = self.valid_o, r=self.valid_r, s2=self.valid_s2, 
+        term=self.valid_term, available_objects=self.valid_available_objects}
 
     self.v_avg = self.q_max * (q2_max[1]:mean() + q2_max[2]:mean())/2
     self.tderr_avg = (delta[1]:clone():abs():mean() + delta[2]:clone():abs():mean())/2
@@ -353,10 +378,10 @@ function nql:perceive(reward, state, terminal, testing, testing_ep, available_ob
 
     self.transitions:add_recent_state(state, terminal)
 
-    --Store transition s, a, r, s'
+    --Store transition s, a, r, s' (only if not testing)
     if self.lastState and not testing then
         self.transitions:add(self.lastState, self.lastAction, self.lastObject, reward,
-                             self.lastTerminal, priority)
+                             self.lastTerminal, table_to_binary_tensor(available_objects, self.n_objects))
     end
 
     if self.numSteps == self.learn_start+1 and not testing then

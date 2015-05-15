@@ -61,6 +61,7 @@ function trans:__init(args)
     self.o = torch.LongTensor(self.maxSize):fill(0) --objects
     self.r = torch.zeros(self.maxSize)
     self.t = torch.ByteTensor(self.maxSize):fill(0)
+    self.available_objects = torch.zeros(self.maxSize, self.numObjects)
     self.action_encodings = torch.eye(self.numActions)
     self.object_encodings = torch.eye(self.numObjects)
 
@@ -78,6 +79,7 @@ function trans:__init(args)
     self.buf_term   = torch.ByteTensor(self.bufferSize):fill(0)
     self.buf_s      = torch.ByteTensor(self.bufferSize, s_size):fill(0)
     self.buf_s2     = torch.ByteTensor(self.bufferSize, s_size):fill(0)
+    self.buf_available_objects = torch.zeros(self.bufferSize, self.numObjects)  
 
     if self.gpu and self.gpu >= 0 then
         self.gpu_s  = self.buf_s:float():cuda()
@@ -108,13 +110,14 @@ function trans:fill_buffer()
     self.buf_ind = 1
     local ind
     for buf_ind=1,self.bufferSize do
-        local s, a, o, r, s2, term = self:sample_one(1)
+        local s, a, o, r, s2, term, available_objects = self:sample_one(1)
         self.buf_s[buf_ind]:copy(s)
         self.buf_a[buf_ind] = a
         self.buf_o[buf_ind] = o
         self.buf_r[buf_ind] = r
         self.buf_s2[buf_ind]:copy(s2)
         self.buf_term[buf_ind] = term
+        self.buf_available_objects[buf_ind] = available_objects
     end
     self.buf_s  = self.buf_s:float()
     self.buf_s2 = self.buf_s2:float()
@@ -167,14 +170,14 @@ function trans:sample(batch_size)
     self.buf_ind = self.buf_ind+batch_size
     local range = {{index, index+batch_size-1}}
 
-    local buf_s, buf_s2, buf_a, buf_o, buf_r, buf_term = self.buf_s, self.buf_s2,
-        self.buf_a, self.buf_o, self.buf_r, self.buf_term
+    local buf_s, buf_s2, buf_a, buf_o, buf_r, buf_term, buf_available_objects = self.buf_s, self.buf_s2,
+        self.buf_a, self.buf_o, self.buf_r, self.buf_term, self.buf_available_objects
     if self.gpu and self.gpu >=0  then
         buf_s = self.gpu_s
         buf_s2 = self.gpu_s2
     end
 
-    return buf_s[range], buf_a[range], buf_o[range], buf_r[range], buf_s2[range], buf_term[range]
+    return buf_s[range], buf_a[range], buf_o[range], buf_r[range], buf_s2[range], buf_term[range], buf_available_objects[range]
 end
 
 
@@ -278,11 +281,11 @@ function trans:get(index)
     local s2 = self:concatFrames(index+1)
     local ar_index = index+self.recentMemSize-1
 
-    return s, self.a[ar_index], self.o[ar_index], self.r[ar_index], s2, self.t[ar_index+1]
+    return s, self.a[ar_index], self.o[ar_index], self.r[ar_index], s2, self.t[ar_index+1], self.available_objects[ar_index]
 end
 
 
-function trans:add(s, a, o, r, term)
+function trans:add(s, a, o, r, term, available_objects)
     assert(s, 'State cannot be nil')
     assert(a, 'Action cannot be nil')
     assert(o, 'Object cannot be nil')
@@ -305,6 +308,7 @@ function trans:add(s, a, o, r, term)
     self.a[self.insertIndex] = a
     self.o[self.insertIndex] = o
     self.r[self.insertIndex] = r
+    self.available_objects[self.insertIndex] = available_objects
     if term then
         self.t[self.insertIndex] = 1
     else
