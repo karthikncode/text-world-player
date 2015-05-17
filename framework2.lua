@@ -334,7 +334,7 @@ function getState(logger, print_on)
 		terminal = true
 		-- sleep(5)
 	end
-	if reward >=1  then
+	if reward >=1 or reward <= -1 then
 		print(text, reward)
 	end
 

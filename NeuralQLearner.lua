@@ -451,6 +451,14 @@ function nql:sample_action(state, testing_ep, available_objects)
     q[2]:exp()    
     q[2]:cmul(available_objects:float())
 
+    if q[1]:sum()<=0 then
+        print("q[1]", q[1])
+    end
+
+    if q[2]:sum()<=0 then
+        print("q[2]", q[2])
+    end
+
     local sample_a = torch.multinomial(q[1], 1)[1]
     local sample_o = torch.multinomial(q[2], 1)[1]
 

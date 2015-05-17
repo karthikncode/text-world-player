@@ -196,6 +196,7 @@ while step < opt.steps do
 		--Testing
     if step % opt.eval_freq == 0 and step > learn_start then
         print('Testing Starts ... ')
+        pos_reward_cnt = 0
         test_avg_Q = test_avg_Q or optim.Logger(paths.concat(opt.exp_folder , 'test_avgQ.log'))
         test_avg_R = test_avg_R or optim.Logger(paths.concat(opt.exp_folder , 'test_avgR.log'))
 
@@ -221,9 +222,11 @@ while step < opt.steps do
             end
 
             -- Play game in test mode (episodes don't end when losing a life)
-		        state, reward, terminal, available_objects = framework.step(action_index, object_index, gameLogger)
+	        state, reward, terminal, available_objects = framework.step(action_index, object_index, gameLogger)
 
-           
+            if(reward >= 10) then
+                pos_reward_cnt =pos_reward_cnt+1
+            end
 
             if estep%1000 == 0 then collectgarbage() end
 
@@ -278,13 +281,13 @@ while step < opt.steps do
         print(string.format(
             '\nSteps: %d (frames: %d), reward: %.2f, epsilon: %.2f, lr: %G, ' ..
             'training time: %ds, training rate: %dfps, testing time: %ds, ' ..
-            'testing rate: %dfps,  num. ep.: %d,  num. rewards: %d',
+            'testing rate: %dfps,  num. ep.: %d,  num. rewards: %d, completion rate: %.2f',
             step, step*opt.actrep, total_reward, agent.ep, agent.lr, time_dif,
             training_rate, eval_time, opt.actrep*opt.eval_steps/eval_time,
-            nepisodes, nrewards))
+            nepisodes, nrewards, pos_reward_cnt/nepisodes))
 
 
-
+        pos_reward_cnt = 0
         print('Testing Ends ... ')
     end
 
