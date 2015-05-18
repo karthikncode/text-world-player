@@ -5,8 +5,8 @@ require 'utils'
 local _ = require 'underscore'
 local DEBUG = false
 
-local DEFAULT_REWARD = -0.01
-local JUNK_CMD_REWARD = -0.1
+local DEFAULT_REWARD = -0.001
+local JUNK_CMD_REWARD = -0.01
 local STEP_COUNT = 0 -- count the number of steps in current episode
 local BRIDGE_PASSED = false
 
@@ -33,7 +33,6 @@ exits = {'east','west','north','south',
 				 'back to cliff',
 				 'enter',
 				 'leave',
-				 'old bridge',
 				 'hole into cliff',
 				 'climb the chain',
 				 'bridge',
@@ -92,9 +91,9 @@ function parse_game_output(text)
 		elseif string.match(text[i], "REWARD") then
 			if not BRIDGE_PASSED or not string.match(text[i], "REWARD_bridge") then
 				if reward then
-					reward = reward + tonumber(string.match(text[i], "[-%d]+"))
+					reward = reward + tonumber(string.match(text[i], "[-%.%d]+"))
 				else
-					reward = tonumber(string.match(text[i], "[-%d]+"))
+					reward = tonumber(string.match(text[i], "[-%.%d]+"))
 				end				
 			end
 
@@ -210,6 +209,7 @@ function makeSymbolMapping(filename)
 	end
 	
 	--add aliases for exits (not best way but in order to speed up gameplay)
+	object_mapping['old bridge'] = object_mapping['bridge']
 	object_mapping['ruined temple'] = object_mapping['temple']
 	object_mapping['overgrown courtyard'] = object_mapping['courtyard']
 	object_mapping['bridge over the abyss'] = object_mapping['bridge']
@@ -307,14 +307,16 @@ function getState(logger, print_on)
 	local text, reward, exits, objects_available = parse_game_output(inData)		
 
 	-- look only if command was junk
-	if reward == JUNK_CMD_REWARD then		
+	if true or reward == JUNK_CMD_REWARD then		
 		data_out('look')
 		local inData2 = data_in()
 		while #inData2 == 0 or not string.match(inData2[#inData2],'<EOM>') do	
 			TableConcat(inData2, data_in())
 		end
 		local text2, tmp_reward, exits2, objects_available2 = parse_game_output(inData2) -- the room description after 'looking'
-		text = text .. text2
+		if text ~= text2 then		
+			text = text .. text2
+		end
 		exits = exits2
 		objects_available = objects_available2
 		reward = reward + tmp_reward
@@ -330,11 +332,11 @@ function getState(logger, print_on)
 			sleep(0.1)
 		end
 	end
-	if reward >= 10 then
+	if reward >= 1 then
 		terminal = true
 		-- sleep(5)
 	end
-	if reward >=1 or reward <= -1 then
+	if reward >0.4 or reward <= -1 then
 		print(text, reward)
 	end
 

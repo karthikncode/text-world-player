@@ -152,7 +152,7 @@ local nepisodes
 local episode_reward
 
 local state, reward, terminal, available_objects = framework.newGame() 
-
+local priority = false
 print("Started RL based training ...")
 local pos_reward_cnt = 0
 
@@ -163,7 +163,7 @@ while step < opt.steps do
     step = step + 1
     xlua.progress(step, opt.steps)
 
-    local action_index, object_index = agent:perceive(reward, state, terminal, nil, nil, available_objects)
+    local action_index, object_index = agent:perceive(reward, state, terminal, nil, nil, available_objects, priority)
 
     if reward > 0 then 
         pos_reward_cnt = pos_reward_cnt + 1
@@ -172,6 +172,13 @@ while step < opt.steps do
     -- game over? get next game!
     if not terminal then
         state, reward, terminal, available_objects = framework.step(action_index, object_index)
+
+        --priority sweeping
+        if reward > 0 then
+            priority = true
+        else
+            priority = false
+        end
     else
         -- if opt.random_starts > 0 then
         --     state, reward, terminal, available_objects = framework.nextRandomGame()
@@ -224,7 +231,7 @@ while step < opt.steps do
             -- Play game in test mode (episodes don't end when losing a life)
 	        state, reward, terminal, available_objects = framework.step(action_index, object_index, gameLogger)
 
-            if(reward >= 10) then
+            if(reward >= 1) then
                 pos_reward_cnt =pos_reward_cnt+1
             end
 

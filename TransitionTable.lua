@@ -65,6 +65,9 @@ function trans:__init(args)
     self.action_encodings = torch.eye(self.numActions)
     self.object_encodings = torch.eye(self.numObjects)
 
+    --structure for storing priority state indices (of the state itself, without hist size adjustments)
+    self.priority_indices = {}
+
     -- Tables for storing the last histLen states.  They are used for
     -- constructing the most recent agent state more easily.
     self.recent_s = {}
@@ -104,13 +107,18 @@ function trans:empty()
 end
 
 
-function trans:fill_buffer()
-    assert(self.numEntries >= self.bufferSize)
+function trans:fill_buffer(priority_ratio)
+    -- assert(self.numEntries >= self.bufferSize) --@karthik: for priority sweeping
     -- clear CPU buffers
     self.buf_ind = 1
-    local ind
+    local ind, priority
     for buf_ind=1,self.bufferSize do
-        local s, a, o, r, s2, term, available_objects = self:sample_one(1)
+        if torch.rand(1)[1] < priority_ratio then
+            priority = true
+        else
+            priority = false
+        end
+        local s, a, o, r, s2, term, available_objects = self:sample_one(priority)
         self.buf_s[buf_ind]:copy(s)
         self.buf_a[buf_ind] = a
         self.buf_o[buf_ind] = o
@@ -128,13 +136,21 @@ function trans:fill_buffer()
 end
 
 
-function trans:sample_one()
+function trans:sample_one(priority)
     assert(self.numEntries > 1)
-    local index
+    local index = nil
     local valid = false
     while not valid do
         -- start at 2 because of previous action
-        index = torch.random(2, self.numEntries-self.recentMemSize)
+        if priority and #self.priority_indices > 0 then
+            while not index or index > self.numEntries-self.recentMemSize do
+                index  = self.priority_indices[torch.random(1,#self.priority_indices)]
+            end
+            index = index - self.recentMemSize + 1 -- to account for histSize
+            -- print("Choosing priority action", index, #self.priority_indices)
+        else
+            index = torch.random(2, self.numEntries-self.recentMemSize)
+        end
         if self.t[index+self.recentMemSize-1] == 0 then
             valid = true
         end
@@ -157,12 +173,13 @@ function trans:sample_one()
 end
 
 
-function trans:sample(batch_size)
+function trans:sample(batch_size, priority_ratio)
+    priority_ratio = priority_ratio or 0.5
     local batch_size = batch_size or 1
     assert(batch_size < self.bufferSize)
 
     if not self.buf_ind or self.buf_ind + batch_size - 1 > self.bufferSize then
-        self:fill_buffer()
+        self:fill_buffer(priority_ratio)
     end
 
     local index = self.buf_ind
@@ -224,7 +241,7 @@ function trans:concatFrames(index, use_recent)
     return fullstate
 end
 
-
+-- not used in this file
 function trans:concatActions(index, use_recent)
     local act_hist = torch.FloatTensor(self.histLen, self.numActions)
     local obj_hist = torch.FloatTensor(self.histLen, self.numObjects)
@@ -303,6 +320,11 @@ function trans:add(s, a, o, r, term, available_objects)
         self.insertIndex = 1
     end
 
+    --check if insertIndex is in priorityIndex, if so then remove it
+    if self.insertIndex == self.priority_indices[1] then
+        table.remove(self.priority_indices, 1)
+    end
+
     -- Overwrite (s,a,r,t) at insertIndex
     self.s[self.insertIndex] = s:clone():float()
     self.a[self.insertIndex] = a
@@ -313,6 +335,12 @@ function trans:add(s, a, o, r, term, available_objects)
         self.t[self.insertIndex] = 1
     else
         self.t[self.insertIndex] = 0
+    end
+
+    --add to priorityIndices if reward is positive
+    if r > 0 then
+        -- print("adding priority index", self.insertIndex, #self.priority_indices)
+        table.insert(self.priority_indices, self.insertIndex)
     end
 end
 

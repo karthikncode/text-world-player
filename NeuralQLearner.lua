@@ -110,7 +110,7 @@ function nql:__init(args)
 
     -- Create transition table.
     ---- assuming the transition table always gets floating point input
-    ---- (Foat or Cuda tensors) and always returns one of the two, as required
+    ---- (Float or Cuda tensors) and always returns one of the two, as required
     ---- internally it always uses ByteTensors for states, scaling and
     ---- converting accordingly
     local transition_args = {
@@ -119,7 +119,7 @@ function nql:__init(args)
         maxSize = self.replay_memory, histType = self.histType,
         histSpacing = self.histSpacing, nonTermProb = self.nonTermProb,
         bufferSize = self.bufferSize
-    }
+    }   
 
     self.transitions = dqn.TransitionTable(transition_args)
 
@@ -200,12 +200,12 @@ function nql:getQUpdate(args)
     q2_max[1] = q2_max[1]:float():max(2) --actions
     q2_max[2] = q2_max[2]:float()
     
-    q2_max[2]:exp()
+    -- q2_max[2]:exp()  --TODO1
     -- print(q2_max[2])
     -- print(available_objects)
 
     q2_max[2]:cmul(available_objects:float())
-    q2_max[2]:log()
+    q2_max[2][q2_max[2]:eq(0)] = math.log(0)    
     q2_max[2] = q2_max[2]:max(2)
 
     -- print(q2_max[2])
@@ -273,15 +273,18 @@ end
 function nql:qLearnMinibatch()
     -- Perform a minibatch Q-learning update:
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
-    assert(self.transitions:size() > self.minibatch_size)
 
-    local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size)
-
-
-    -- print(s, a, o, r, s2, term)
+    local priority_ratio = 0.1 -- fraction of samples from 'priority' transitions
+    local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size, priority_ratio)   
+    -- print(s:size(), a:size(), o:size(), r:size(), s2:size(), term:size())
 
     local targets, delta, q2_max = self:getQUpdate{s=s, a=a, o=o, r=r, s2=s2,
         term=term, update_qmax=true, available_objects=available_objects}
+
+
+    -- print("targets", targets[1])
+    -- print("delta", delta[1])
+    -- print("q2_max", q2_max[1])
 
     -- zero gradients of parameters
     self.dw:zero()
@@ -304,12 +307,13 @@ function nql:qLearnMinibatch()
     self.lr = math.max(self.lr, self.lr_end)
 
     --grad normalization
-    local max_norm = 5
-    local grad_norm = self.dw:norm()
-    if grad_norm > max_norm then
-      local scale_factor = max_norm/grad_norm
-      self.dw:mul(scale_factor)
-    end
+    -- local max_norm = 10
+    -- local grad_norm = self.dw:norm()
+    -- if grad_norm > max_norm then
+    --   local scale_factor = max_norm/grad_norm
+    --   self.dw:mul(scale_factor)
+    --   print("Scaling down gradients. Norm:", grad_norm)
+    -- end
 
     -- use gradients
     self.g:mul(0.95):add(0.05, self.dw)
@@ -361,7 +365,7 @@ function nql:compute_validation_statistics()
 end
 
 
-function nql:perceive(reward, state, terminal, testing, testing_ep, available_objects)
+function nql:perceive(reward, state, terminal, testing, testing_ep, available_objects, priority)
     -- Preprocess state (will be set to nil if terminal)
     local curState
 
@@ -398,7 +402,7 @@ function nql:perceive(reward, state, terminal, testing, testing_ep, available_ob
         actionIndex, objectIndex, q_func = self:sample_action(curState, testing_ep, available_objects)
     end
 
-    self.transitions:add_recent_action({actionIndex, objectIndex})
+    self.transitions:add_recent_action({actionIndex, objectIndex}) --not used
 
     --Do some Q-learning updates
     if self.numSteps > self.learn_start and not testing and
@@ -443,23 +447,40 @@ function nql:sample_action(state, testing_ep, available_objects)
         q = self.network:forward(state_tmp)
     end
 
-    q[1] = q[1]:float():squeeze():clone()
-    q[2] = q[2]:float():squeeze():clone()
+    q[1] = q[1]:float():squeeze()
+    q[2] = q[2]:float():squeeze()
+
+    orig_q = {q[1]:clone(), q[2]:clone()}
+
+    q[1] = q[1]:double()
+    q[2] = q[2]:double()
+    q[1] = q[1] - q[1]:min()
+    q[2] = q[2] - q[2]:min()
+
     q[1]:exp()
+    -- q[1]:div(q[1]:norm())
     -- convert available objects to tensor
     available_objects = table_to_binary_tensor(available_objects, self.n_objects)
     q[2]:exp()    
-    q[2]:cmul(available_objects:float())
+    q[2]:cmul(available_objects)
+    -- q[2]:div(q[2]:norm())
 
-    if q[1]:sum()<=0 then
-        print("q[1]", q[1])
+    -- if q[1]:sum()<=0 or q[1]:max() > 1e3 or q[1]:min() < -1e3 then
+    --     print("q[1]", q[1])
+    -- end
+
+    -- if q[2]:sum()<=0 or q[2]:max() > 1e3 or q[2]:min() < -1e3 then
+    --     print("q[2]", q[2])
+    -- end
+
+    local status, sample_a = pcall(torch.multinomial, q[1], 1)
+    if not status then
+        print(q[1], orig_q[1])
+        print(q[2], orig_q[2])
+        assert(false)
+    else
+        sample_a = sample_a[1]
     end
-
-    if q[2]:sum()<=0 then
-        print("q[2]", q[2])
-    end
-
-    local sample_a = torch.multinomial(q[1], 1)[1]
     local sample_o = torch.multinomial(q[2], 1)[1]
 
     self.lastAction = sample_a
