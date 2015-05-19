@@ -260,7 +260,7 @@ end
 -- input_text is just a string with the room description
 function convert_text_to_bow(input_text)
 	local vector = torch.zeros(#symbols)
-	line = string.gsub(input_text, '{.','')
+	local line = string.gsub(input_text, "{.","")
 	local list_words = split(line, "%a+")
 	for i=1,#list_words do			
 		local word = list_words[i]
@@ -287,7 +287,7 @@ function convert_text_to_ordered_list(input_text)
 	local REVERSE = true --reverse the order of words to have padding in beginning
 	cnt=1
 	
-	line = string.gsub(input_text, '{.','')
+	local line = string.gsub(input_text, "{.","")
 	local list_words = split(line, "%a+")
 	for i=1,#list_words do			
 		local word = list_words[i]

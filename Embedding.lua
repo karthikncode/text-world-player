@@ -54,8 +54,8 @@ function nn.LookupTable:updateOutput(input)
 end
 
 
-n_hid = 100
-nIndex = 1500 -- vocab size 
+n_hid = 20
+nIndex = 2000 -- vocab size 
 EMBEDDING = nn.LookupTable(nIndex, n_hid)
 -- local norm = EMBEDDING.weight:sum()/nIndex
 -- EMBEDDING.weight:div(norm) -- zero out initial weights

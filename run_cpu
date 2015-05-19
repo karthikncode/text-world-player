@@ -10,7 +10,7 @@ FRAMEWORK="alewrap"
 STEP_SIZE=1000 #step size for learn_start, eval, saving, etc.
 hist_len=1
 max_steps=250 #max steps  in a single episode
-minibatch_size=32
+minibatch_size=128
 quest_levels=1
 game_num=$1
 game_path=$PWD"/roms/"
@@ -24,7 +24,7 @@ recurrent=1
 netfile="\"lstm_embedding\""  
 # netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
 
-update_freq=4
+update_freq=5
 actrep=1
 discount=0.9
 seed=1
