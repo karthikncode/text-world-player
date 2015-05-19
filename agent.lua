@@ -155,6 +155,7 @@ local state, reward, terminal, available_objects = framework.newGame()
 local priority = false
 print("Started RL based training ...")
 local pos_reward_cnt = 0
+local quest1_reward_cnt
 
 
 print('[Start] Network weight sum:',agent.w:sum())
@@ -204,8 +205,11 @@ while step < opt.steps do
     if step % opt.eval_freq == 0 and step > learn_start then
         print('Testing Starts ... ')
         pos_reward_cnt = 0
+        quest1_reward_cnt = 0
         test_avg_Q = test_avg_Q or optim.Logger(paths.concat(opt.exp_folder , 'test_avgQ.log'))
         test_avg_R = test_avg_R or optim.Logger(paths.concat(opt.exp_folder , 'test_avgR.log'))
+        test_quest1 = test_quest1 or optim.Logger(paths.concat(opt.exp_folder , 'test_quest1.log'))
+        test_quest2 = test_quest2 or optim.Logger(paths.concat(opt.exp_folder , 'test_quest2.log'))
 
         gameLogger = gameLogger or io.open(paths.concat(opt.exp_folder, 'game.log'), 'w')
 
@@ -223,6 +227,10 @@ while step < opt.steps do
 
              -- print Q function for previous state
             if q_func then
+                q_func[1]:exp()
+                q_func[2]:exp()
+                q_func[1] = q_func[1] / q_func[1]:norm()
+                q_func[2] = q_func[2] / q_func[2]:norm()
                 gameLogger:write(table.tostring(q_func), '\n')
             else
                 gameLogger:write("Random action\n")
@@ -231,8 +239,10 @@ while step < opt.steps do
             -- Play game in test mode (episodes don't end when losing a life)
 	        state, reward, terminal, available_objects = framework.step(action_index, object_index, gameLogger)
 
-            if(reward >= 1) then
+            if(reward > 0.9) then
                 pos_reward_cnt =pos_reward_cnt+1
+            elseif reward > 0.4 then
+                quest1_reward_cnt = quest1_reward_cnt + 1                
             end
 
             if estep%1000 == 0 then collectgarbage() end
@@ -271,9 +281,14 @@ while step < opt.steps do
         --saving and plotting
         test_avg_R:add{['% Average Reward'] = total_reward}
         test_avg_Q:add{['% Average Q'] = agent.v_avg}
+        test_quest1:add{['% Quest 1'] = quest1_reward_cnt/nepisodes}
+        test_quest2:add{['% Quest 2'] = pos_reward_cnt/nepisodes}
         
         test_avg_R:style{['% Average Reward'] = '-'}; test_avg_R:plot()
         test_avg_Q:style{['% Average Q'] = '-'}; test_avg_Q:plot()
+        test_quest1:style{['% Quest 1'] = '-'}; test_quest1:plot()
+        test_quest2:style{['% Quest 2'] = '-'}; test_quest2:plot()
+
 
         reward_history[ind] = total_reward
         reward_counts[ind] = nrewards
@@ -295,6 +310,7 @@ while step < opt.steps do
 
 
         pos_reward_cnt = 0
+        quest1_reward_cnt = 0
         print('Testing Ends ... ')
     end
 

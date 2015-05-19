@@ -3,11 +3,11 @@
 #Usage : ./run_cpu <game_num>
 #game_num is 1, 2, 3 ...
 
-exp_folder="logs/tutorial_bow_priority3_lookalways/"
+exp_folder="logs/tutorial_lstm_priority5_tiedAO_hist1/"
 mkdir -p $exp_folder;
 
 FRAMEWORK="alewrap"
-STEP_SIZE=5000 #step size for learn_start, eval, saving, etc.
+STEP_SIZE=1000 #step size for learn_start, eval, saving, etc.
 hist_len=1
 max_steps=250 #max steps  in a single episode
 minibatch_size=32
@@ -18,13 +18,13 @@ env_params="useRGB=true"
 agent="NeuralQLearner"
 n_replay=1
 
-recurrent=0
-netfile="\"bow_embedding\"" 
+recurrent=1
+# netfile="\"bow_embedding\"" 
 # netfile="\"rnn_embedding\""  
-# netfile="\"lstm_embedding\""  
+netfile="\"lstm_embedding\""  
 # netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
 
-update_freq=1
+update_freq=4
 actrep=1
 discount=0.9
 seed=1
@@ -42,7 +42,7 @@ lr=0.0005
 
 agent_type=$exp_folder"DQN3_0_1"
 agent_name=$agent_type"_"$1"_FULL_Y"
-state_dim=30
+state_dim=250
 ncols=1
 agent_params="lr="$lr",ep="$eps",ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size="$minibatch_size",rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,clip_delta=1,min_reward=-1,max_reward=1"
 steps=2000000
