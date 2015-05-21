@@ -110,12 +110,15 @@ return function(args)
         lstm_seq = nn.Sequential()
         lstm_seq:add(nn.Sequencer(l))
         
-        lstm_seq:add(nn.SelectTable(args.state_dim))
-        lstm_seq:add(nn.Linear(n_hid, n_hid))
+        -- lstm_seq:add(nn.SelectTable(args.state_dim))
+        -- lstm_seq:add(nn.Linear(n_hid, n_hid))
 
         -- alternative - considering outputs from all timepoints
         -- lstm_seq:add(nn.JoinTable(2))
         -- lstm_seq:add(nn.Linear(args.state_dim * n_hid, n_hid))
+
+        lstm_seq:add(nn.CAddTable())
+        lstm_seq:add(nn.Linear(n_hid, n_hid))
         
 
         lstm_seq:add(nn.Rectifier())
@@ -123,6 +126,7 @@ return function(args)
         -- lstm_seq:add(nn.Sigmoid())
 
         parallel_flows = nn.ParallelTable()
+        print("state dim multiplier", args.state_dim_multiplier)
         for f=1, args.hist_len * args.state_dim_multiplier do
             if f > 1 then
                 parallel_flows:add(lstm_seq:clone("weight","bias","gradWeight", "gradBias")) -- TODO share 'weight' and 'bias'

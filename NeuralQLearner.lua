@@ -274,7 +274,7 @@ function nql:qLearnMinibatch()
     -- Perform a minibatch Q-learning update:
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
 
-    local priority_ratio = 0.1 -- fraction of samples from 'priority' transitions
+    local priority_ratio = 0.25 -- fraction of samples from 'priority' transitions
     local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size, priority_ratio)   
     -- print(s:size(), a:size(), o:size(), r:size(), s2:size(), term:size())
 
@@ -315,18 +315,36 @@ function nql:qLearnMinibatch()
     --   print("Scaling down gradients. Norm:", grad_norm)
     -- end
 
-    -- use gradients
-    self.g:mul(0.95):add(0.05, self.dw)
+    -- use gradients (original)
+    -- self.g:mul(0.95):add(0.05, self.dw)
+    -- self.tmp:cmul(self.dw, self.dw)
+    -- self.g2:mul(0.95):add(0.05, self.tmp) -- g2 is g squared
+    -- self.tmp:cmul(self.g, self.g)
+    -- self.tmp:mul(-1)
+    -- self.tmp:add(self.g2)
+    -- self.tmp:add(0.01)
+    -- self.tmp:sqrt()
+
+    --rmsprop (karthik)
+    local smoothing_value = 1e-8
     self.tmp:cmul(self.dw, self.dw)
-    self.g2:mul(0.95):add(0.05, self.tmp)
-    self.tmp:cmul(self.g, self.g)
-    self.tmp:mul(-1)
-    self.tmp:add(self.g2)
-    self.tmp:add(0.01)
-    self.tmp:sqrt()
+    self.g:mul(0.9):add(0.1, self.tmp)
+    self.tmp = torch.sqrt(self.g)
+    self.tmp:add(smoothing_value)  --negative learning rate
+
+    --AdaGrad (karthik)
+    -- self.tmp:cmul(self.dw, self.dw)
+    -- self.g2:cmul(self.g, self.g)
+    -- self.g2:add(self.tmp)
+    -- self.g = torch.sqrt(self.g2)
+    -- self.tmp = self.g:clone()
+
+
 
     -- accumulate update
     self.deltas:mul(0):addcdiv(self.lr, self.dw, self.tmp)
+    -- print(self.tmp:norm())
+    -- print(self.deltas:norm())
 
     self.w:add(self.deltas)
 
@@ -398,8 +416,8 @@ function nql:perceive(reward, state, terminal, testing, testing_ep, available_ob
     local actionIndex = 1
     local objectIndex = 1
     if not terminal then
-        -- actionIndex, objectIndex, q_func = self:eGreedy(curState, testing_ep, available_objects)
-        actionIndex, objectIndex, q_func = self:sample_action(curState, testing_ep, available_objects)
+        actionIndex, objectIndex, q_func = self:eGreedy(curState, testing_ep, available_objects)
+        -- actionIndex, objectIndex, q_func = self:sample_action(curState, testing_ep, available_objects)
     end
 
     self.transitions:add_recent_action({actionIndex, objectIndex}) --not used

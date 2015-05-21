@@ -48,7 +48,9 @@ cmd:option('-threads', 1, 'number of BLAS threads')
 cmd:option('-gpu', -1, 'gpu flag')
 cmd:option('-game_num', 1, 'game number (for parallel game servers)')
 cmd:option('-wordvec_file', 'wordvec.eng' , 'Word vector file')
-cmd:option('-tutorial_world', true, 'play tutorial_world')
+cmd:option('-tutorial_world', 1, 'play tutorial_world')
+cmd:option('-random_test', 0, 'test random policy')
+cmd:option('-use_wordvec', 0, 'use word vec')
 
 cmd:text()
 
@@ -59,7 +61,8 @@ QUEST_LEVELS = opt.quest_levels
 STATE_DIM = opt.state_dim
 MAX_STEPS = opt.max_steps
 WORDVEC_FILE = opt.wordvec_file
-TUTORIAL_WORLD = opt.tutorial_world
+TUTORIAL_WORLD = (opt.tutorial_world==1)
+RANDOM_TEST = (opt.random_test==1)
 print(STATE_DIM)
 print("Tutorial world", TUTORIAL_WORLD)
 
@@ -69,7 +72,12 @@ require 'xlua'
 require 'optim'
 require 'hdf5'
 
-local framework = require 'framework2'
+local framework
+if TUTORIAL_WORLD then
+    framework = require 'framework2'
+else
+    framework = require 'framework'
+end
 
 ---------------------------------------------------------------
 
@@ -91,14 +99,32 @@ print(port)
 client_connect(port)
 login('root', 'root')
 
--- framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
-framework.makeSymbolMapping('../text-world/evennia/contrib/tutorial_world/build.ev')
+if TUTORIAL_WORLD then
+    framework.makeSymbolMapping('../text-world/evennia/contrib/tutorial_world/build.ev')
+else
+    framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
+end
 
 print("#symbols", #symbols)
 print(framework.getObjects())
 
-
 EMBEDDING.weight[#symbols+1]:mul(0) --zero out NULL INDEX vector
+
+-- init with word vec
+if opt.use_wordvec==1 then
+    print(WORDVEC_FILE)
+    local wordVec = readWordVec(WORDVEC_FILE)
+    print(#wordVec)
+    for i=1, #symbols do
+        print("wordvec", symbols[i], wordVec[symbols[i]])
+        EMBEDDING.weight[i] = torch.Tensor(wordVec[symbols[i]])
+        assert(EMBEDDING.weight[i]:size(1) == n_hid)
+    end
+else
+    for i=1, #symbols do
+        EMBEDDING.weight[i] = torch.rand(EMBEDDING.weight[i]:size(1))*0.02-0.01
+    end
+end
 
 --- General setup.
 if opt.agent_params then
@@ -174,7 +200,7 @@ while step < opt.steps do
     if not terminal then
         state, reward, terminal, available_objects = framework.step(action_index, object_index)
 
-        --priority sweeping
+        --priority sweeping for positive rewards
         if reward > 0 then
             priority = true
         else
@@ -194,7 +220,6 @@ while step < opt.steps do
         print("\nSteps: ", step, " | Achieved quest level, current reward:" , pos_reward_cnt)
         agent:report()
         pos_reward_cnt = 0
-        collectgarbage()
     end
 
     if step%1000 == 0 then 
@@ -223,14 +248,20 @@ while step < opt.steps do
         local eval_time = sys.clock()
         for estep=1,opt.eval_steps do
             xlua.progress(estep, opt.eval_steps)
-            local action_index, object_index, q_func = agent:perceive(reward, state, terminal, true, 0.05, available_objects)
+
+            local action_index, object_index, q_func 
+            if not RANDOM_TEST then
+                action_index, object_index, q_func = agent:perceive(reward, state, terminal, true, 0.05, available_objects)
+            else
+                action_index, object_index, q_func = agent:perceive(reward, state, terminal, true, 1, available_objects)
+            end
 
              -- print Q function for previous state
             if q_func then
                 q_func[1]:exp()
                 q_func[2]:exp()
-                q_func[1] = q_func[1] / q_func[1]:norm()
-                q_func[2] = q_func[2] / q_func[2]:norm()
+                q_func[1] = q_func[1] / q_func[1]:sum()
+                q_func[2] = q_func[2] / q_func[2]:sum()
                 gameLogger:write(table.tostring(q_func), '\n')
             else
                 gameLogger:write("Random action\n")
@@ -311,7 +342,9 @@ while step < opt.steps do
 
         pos_reward_cnt = 0
         quest1_reward_cnt = 0
+        gameLogger:write("###############\n\n") --end of testing epoch
         print('Testing Ends ... ')
+        collectgarbage()
     end
 
     if step % opt.save_freq == 0 or step == opt.steps then
@@ -349,7 +382,7 @@ while step < opt.steps do
             embedding_save[symbols[i]] = embedding_mat[i]
         end
         embedding_save["NULL"] = embedding_mat[embedding_mat:size(1)]        
-        torch.save(filename..'.embeddings.t7', {embeddings = embedding_save})
+        torch.save(filename..'.embeddings.t7', {embeddings = embedding_save, symbols=symbols})
 
         agent.valid_s, agent.valid_a, agent.valid_r, agent.valid_s2,
             agent.valid_term = s, a, r, s2, term

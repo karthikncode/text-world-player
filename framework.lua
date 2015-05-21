@@ -23,6 +23,7 @@ rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
 
 actions = {"eat", "sleep", "watch", "exercise", "go"} -- hard code in
 objects = {'north','south','east','west'} -- read rest from build file
+-- order in build file: tv, bike, apple, bed
 
 extra_vocab = {'not','but'} -- words that are necessary for vocab but not in other text
 symbols = {}
@@ -295,11 +296,11 @@ end
 
 -------------------------VECTOR function -------------------------
 if RECURRENT == 1 then
-	-- vector_function = convert_text_to_ordered_list
-	vector_function = convert_text_to_ordered_list2
+	vector_function = convert_text_to_ordered_list
+	-- vector_function = convert_text_to_ordered_list2
 else
-	-- vector_function = convert_text_to_bow
-	vector_function = convert_text_to_bow2
+	vector_function = convert_text_to_bow
+	-- vector_function = convert_text_to_bow2
 end
 -------------------------------------------------------------------
 

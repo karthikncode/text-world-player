@@ -17,7 +17,10 @@ return function(args)
 
         local mlp_out = nn.ConcatTable()        
         mlp_out:add(nn.Identity())
-        mlp_out:add(nn.Linear(args.n_actions, args.n_objects))
+        local action_object_nn = nn.Sequential()
+        action_object_nn:add(nn.Linear(args.n_actions, n_hid))
+        action_object_nn:add(nn.Linear(n_hid, args.n_objects))
+        mlp_out:add(action_object_nn)
 
         mlp:add(action_layer)
         mlp:add(mlp_out)
