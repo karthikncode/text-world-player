@@ -13,16 +13,11 @@ return function(args)
         mlp:add(nn.Linear(n_hid, n_hid))
         mlp:add(nn.Rectifier())
 
-        action_layer = nn.Linear(n_hid, args.n_actions)
 
-        local mlp_out = nn.ConcatTable()        
-        mlp_out:add(nn.Identity())
-        local action_object_nn = nn.Sequential()
-        action_object_nn:add(nn.Linear(args.n_actions, n_hid))
-        action_object_nn:add(nn.Linear(n_hid, args.n_objects))
-        mlp_out:add(action_object_nn)
+        local mlp_out = nn.ConcatTable()
+        mlp_out:add(nn.Linear(n_hid, args.n_actions))
+        mlp_out:add(nn.Linear(n_hid, args.n_objects))
 
-        mlp:add(action_layer)
         mlp:add(mlp_out)
         
         if args.gpu >=0 then
@@ -33,3 +28,12 @@ return function(args)
 
     return create_network(args)
 end
+
+
+-- for action-object linking
+   -- local mlp_out = nn.ConcatTable()        
+   --      mlp_out:add(nn.Identity())
+   --      local action_object_nn = nn.Sequential()
+   --      action_object_nn:add(nn.Linear(args.n_actions, n_hid))
+   --      action_object_nn:add(nn.Linear(n_hid, args.n_objects))
+   --      mlp_out:add(action_object_nn)

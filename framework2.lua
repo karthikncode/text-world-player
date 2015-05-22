@@ -5,8 +5,8 @@ require 'utils'
 local _ = require 'underscore'
 local DEBUG = false
 
-local DEFAULT_REWARD = -0.001
-local JUNK_CMD_REWARD = -0.01
+local DEFAULT_REWARD = -0.01
+local JUNK_CMD_REWARD = -0.1
 local STEP_COUNT = 0 -- count the number of steps in current episode
 local BRIDGE_PASSED = false
 
@@ -377,7 +377,7 @@ function getState(logger, print_on)
 		terminal = true
 		-- sleep(5)
 	end
-	if reward > 0.4 or reward <= -1 then
+	if reward > 0.2 or reward <= -1 then
 		print(text, reward)
 	end
 
