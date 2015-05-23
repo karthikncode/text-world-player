@@ -262,11 +262,17 @@ while step < opt.steps do
 
              -- print Q function for previous state
             if q_func then
-                q_func[1]:exp()
-                q_func[2]:exp()
-                q_func[1] = q_func[1] / q_func[1]:sum()
-                q_func[2] = q_func[2] / q_func[2]:sum()
-                gameLogger:write(table.tostring(q_func), '\n')
+                local actions = framework.getActions()
+                local objects = framework.getObjects()
+                for i=1, #actions do
+                    gameLogger:write(actions[i],' ', q_func[1][i],'\n')
+                end
+                gameLogger:write("-----\n")
+                for i=1, #objects do
+                    gameLogger:write(objects[i],' ', q_func[2][i], '\n')
+                end
+
+                -- gameLogger:write(table.tostring(q_func), '\n')
             else
                 gameLogger:write("Random action\n")
             end
@@ -274,12 +280,18 @@ while step < opt.steps do
             -- Play game in test mode (episodes don't end when losing a life)
 	        state, reward, terminal, available_objects = framework.step(action_index, object_index, gameLogger)
 
-            if(reward > 0.9) then
-                quest1_reward_cnt =quest1_reward_cnt+1
-            elseif reward > 0.4 then
-                quest2_reward_cnt = quest2_reward_cnt + 1                
-            elseif reward > 0.2 then
-                quest3_reward_cnt = quest3_reward_cnt + 1 --defeat guardian
+            if TUTORIAL_WORLD then
+                if(reward > 9) then
+                    quest1_reward_cnt =quest1_reward_cnt+1
+                elseif reward > 0.9 then
+                    quest2_reward_cnt = quest2_reward_cnt + 1                
+                elseif reward > 0 then
+                    quest3_reward_cnt = quest3_reward_cnt + 1 --defeat guardian
+                end
+            else
+                if(reward > 0.9) then
+                    quest1_reward_cnt =quest1_reward_cnt+1             
+                end
             end
 
             if estep%1000 == 0 then collectgarbage() end

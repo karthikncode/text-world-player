@@ -198,25 +198,14 @@ function nql:getQUpdate(args)
     end
     
     q2_max[1] = q2_max[1]:float():max(2) --actions
-    q2_max[2] = q2_max[2]:float()
-    
-    -- q2_max[2]:exp()  --TODO1
-    -- print(q2_max[2])
-    -- print(available_objects)
+    q2_max[2] = q2_max[2]:float():max(2)
 
-    q2_max[2]:cmul(available_objects:float())
-    q2_max[2][q2_max[2]:eq(0)] = math.log(0)    
-    q2_max[2] = q2_max[2]:max(2)
 
-    -- print(q2_max[2])
-
-    --  best[1], maxq[1] = self:getBestRandom(q[1], self.n_actions)
-    -- best[2], maxq[2] = self:getBestRandom(q[2], self.n_objects, available_objects)
-    
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)
     q2 = {}
     q2[1] = q2_max[1]:clone():mul(self.discount):cmul(term)
     q2[2] = q2_max[2]:clone():mul(self.discount):cmul(term)
+
 
     delta = {r:clone():float(), r:clone():float()}
 
@@ -232,6 +221,7 @@ function nql:getQUpdate(args)
         -- print(s_tmp)
         q_all = self.network:forward(s_tmp)
     end
+
     
     q_all[1] = q_all[1]:float()
     q_all[2] = q_all[2]:float()
@@ -274,17 +264,22 @@ function nql:qLearnMinibatch()
     -- Perform a minibatch Q-learning update:
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
 
-    local priority_ratio = 0.25 -- fraction of samples from 'priority' transitions
+    local priority_ratio = 0.1 -- fraction of samples from 'priority' transitions
     local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size, priority_ratio)   
     -- print(s:size(), a:size(), o:size(), r:size(), s2:size(), term:size())
 
     local targets, delta, q2_max = self:getQUpdate{s=s, a=a, o=o, r=r, s2=s2,
         term=term, update_qmax=true, available_objects=available_objects}
 
-
+    -- print("s", s:mean(), s:norm())
+    -- print("a", a)
+    -- print("o", o)
+    -- print("r", r)
     -- print("targets", targets[1])
     -- print("delta", delta[1])
     -- print("q2_max", q2_max[1])
+    -- print(q2_max)
+    -- local tmp__ = io.read()
 
     -- zero gradients of parameters
     self.dw:zero()
@@ -401,6 +396,7 @@ function nql:perceive(reward, state, terminal, testing, testing_ep, available_ob
     self.transitions:add_recent_state(state, terminal)
 
     --Store transition s, a, r, s' (only if not testing)
+    -- IMP: available_objects is for selecting an action at s'
     if self.lastState and not testing then
         self.transitions:add(self.lastState, self.lastAction, self.lastObject, reward,
                              self.lastTerminal, table_to_binary_tensor(available_objects, self.n_objects))
@@ -530,8 +526,8 @@ end
 
 -- Evaluate all actions (with random tie-breaking)
 function nql:getBestRandom(q, N, available_objects)
-    -- print("avail OBJECTSSSS",available_objects)
     if available_objects then
+        -- print("avail OBJECTSSSS",available_objects)
         local maxq = q[available_objects[1]]
         local besta = {available_objects[1]}
         for i=2, #available_objects do 
@@ -543,7 +539,8 @@ function nql:getBestRandom(q, N, available_objects)
                 besta[#besta+1] = a
             end
         end
-        local r = torch.random(1, #besta)
+        local r = torch.random(1, #besta)    
+        -- print("best object:", besta[r], maxq, q)
         return besta[r], maxq
     end
 
@@ -592,6 +589,9 @@ function nql:greedy(state, available_objects)
     self.lastObject = best[2]
     self.bestq = (maxq[1] + maxq[2])/2
     
+    local avail_obj_tensor = table_to_binary_tensor(available_objects, self.n_objects):float()
+    q[2] = q[2]:clone():cmul(avail_obj_tensor)
+
     return best[1], best[2], q
 end
 

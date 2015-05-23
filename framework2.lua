@@ -24,7 +24,7 @@ local BRIDGE_PASSED = false
 -- mislead_quest_checklist = {}
 -- rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
 
-actions = {'look', 'get', 'light', 'stab', 'climb', 'move', 'go'} -- hard code in
+actions = {'get', 'light', 'stab', 'climb', 'move', 'go'} -- hard code in
 -- action 'go' is treated specially - no need to output the word 'go' in the command
 objects = {'here', 'foggy tentacles'} -- read rest from build file
 exits = {'east','west','north','south',
@@ -32,7 +32,7 @@ exits = {'east','west','north','south',
 			   'northern path',
 				 'back to cliff',
 				 'enter',
-				 'leave',
+				 'leave', --10
 				 'hole into cliff',
 				 'climb the chain',
 				 'bridge',
@@ -42,7 +42,7 @@ exits = {'east','west','north','south',
 				 'castle corner',
 				 'gatehouse',
 				 'courtyard',
-				 'temple',
+				 'temple', --20
 				 'stairs down',
 				 'blue bird tomb',
 				 'tomb of woman on horse',
@@ -144,7 +144,8 @@ function parse_game_output(text)
 		-- Incorrect command cases
 		elseif 	 string.match(text[i], 'not available') 
 					or string.match(text[i], 'not find')
-					or string.match(text[i], "You can't get that.") then
+					or string.match(text[i], "You can't get that.") 
+					or string.match(text[i], "you cannot") then
 			if reward then
 				reward = reward + JUNK_CMD_REWARD			
 			else
@@ -360,7 +361,7 @@ function getState(logger, print_on)
 		end
 		exits = exits2
 		objects_available = objects_available2
-		reward = reward + tmp_reward
+		-- reward = reward + tmp_reward
 	end
 
 	if DEBUG or print_on then
@@ -373,11 +374,11 @@ function getState(logger, print_on)
 			sleep(0.1)
 		end
 	end
-	if reward > 0.9 then
+	if reward >= 10 then
 		terminal = true
 		-- sleep(5)
 	end
-	if reward > 0.2 or reward <= -1 then
+	if reward > 0.9 or reward <= -1 then
 		print(text, reward)
 	end
 
