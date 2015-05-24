@@ -5,6 +5,10 @@ See LICENSE file for full terms of limited license.
 ]]
 
 require 'utils'
+require 'nn'
+require 'rnn'
+require 'nngraph'
+
 local nql = torch.class('dqn.NeuralQLearner')
 
 
@@ -80,7 +84,7 @@ function nql:__init(args)
         print('Preloading network file:', self.network)
         -- try to load saved agent
         local err_msg, exp = pcall(torch.load, self.network)
-        if not err_msg then
+        if not err_msg then            
             error("Could not find network file ")
         end
         if self.best and exp.best_model then
@@ -181,10 +185,13 @@ function nql:getQUpdate(args)
 
     local target_q_net
     if self.target_q then
-        target_q_net = self.target_network
+        target_q_net = self.target_network        
     else
         target_q_net = self.network
     end
+    print(target_q_net)
+    print("NETWORK!!")
+    print(self.network)
 
     -- Compute {max_a Q(s_2, a), max_o Q(s_2, o)}.
     -- print("S: ", s)
@@ -193,7 +200,7 @@ function nql:getQUpdate(args)
         q2_max = target_q_net:forward(s2)
     else        
         local s2_tmp = tensor_to_table(s2, self.state_dim, self.hist_len)
-        -- print(s2_tmp)
+        print(s2_tmp)
         q2_max = target_q_net:forward(s2_tmp)
     end
     
@@ -264,7 +271,7 @@ function nql:qLearnMinibatch()
     -- Perform a minibatch Q-learning update:
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
 
-    local priority_ratio = 0.1 -- fraction of samples from 'priority' transitions
+    local priority_ratio = 0.25 -- fraction of samples from 'priority' transitions
     local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size, priority_ratio)   
     -- print(s:size(), a:size(), o:size(), r:size(), s2:size(), term:size())
 
