@@ -188,45 +188,47 @@ print('[Start] Network weight sum:',agent.w:sum())
 
 while step < opt.steps do
     step = step + 1
-    xlua.progress(step, opt.steps)
+    if not RANDOM_TEST then
+    	xlua.progress(step, opt.steps)
 
-    local action_index, object_index = agent:perceive(reward, state, terminal, nil, nil, available_objects, priority)
+    	local action_index, object_index = agent:perceive(reward, state, terminal, nil, nil, available_objects, priority)
 
-    if reward > 0 then 
-        pos_reward_cnt = pos_reward_cnt + 1
+    	if reward > 0 then 
+    	    pos_reward_cnt = pos_reward_cnt + 1
+    	end
+    	    
+    	-- game over? get next game!
+    	if not terminal then
+    	    state, reward, terminal, available_objects = framework.step(action_index, object_index)
+
+    	    --priority sweeping for positive rewards
+    	    if reward > 0 then
+    	        priority = true
+    	    else
+    	        priority = false
+    	    end
+    	else
+    	    -- if opt.random_starts > 0 then
+    	    --     state, reward, terminal, available_objects = framework.nextRandomGame()
+    	    -- else
+    	    state, reward, terminal, available_objects = framework.newGame()
+    	    -- end
+    	end
+
+    	if step % opt.prog_freq == 0 then
+    	    assert(step==agent.numSteps, 'trainer step: ' .. step ..
+    	            ' & agent.numSteps: ' .. agent.numSteps)
+    	    print("\nSteps: ", step, " | Achieved quest level, current reward:" , pos_reward_cnt)
+    	    agent:report()
+    	    pos_reward_cnt = 0
+    	end
+
+    	if step%1000 == 0 then 
+    	    collectgarbage() 
+    	end
     end
-        
-    -- game over? get next game!
-    if not terminal then
-        state, reward, terminal, available_objects = framework.step(action_index, object_index)
 
-        --priority sweeping for positive rewards
-        if reward > 0 then
-            priority = true
-        else
-            priority = false
-        end
-    else
-        -- if opt.random_starts > 0 then
-        --     state, reward, terminal, available_objects = framework.nextRandomGame()
-        -- else
-        state, reward, terminal, available_objects = framework.newGame()
-        -- end
-    end
-
-    if step % opt.prog_freq == 0 then
-        assert(step==agent.numSteps, 'trainer step: ' .. step ..
-                ' & agent.numSteps: ' .. agent.numSteps)
-        print("\nSteps: ", step, " | Achieved quest level, current reward:" , pos_reward_cnt)
-        agent:report()
-        pos_reward_cnt = 0
-    end
-
-    if step%1000 == 0 then 
-        collectgarbage() 
-    end
-
-		--Testing
+	--Testing
     if step % opt.eval_freq == 0 and step > learn_start then
         print('Testing Starts ... ')
         quest3_reward_cnt = 0
@@ -312,7 +314,9 @@ while step < opt.steps do
 
         eval_time = sys.clock() - eval_time
         start_time = start_time + eval_time
-        agent:compute_validation_statistics()
+	if not RANDOM_TEST then
+            agent:compute_validation_statistics()
+	end
         local ind = #reward_history+1
         total_reward = total_reward/math.max(1, nepisodes)
 

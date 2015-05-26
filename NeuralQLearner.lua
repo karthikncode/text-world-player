@@ -200,11 +200,12 @@ function nql:getQUpdate(args)
     q2_max[1] = q2_max[1]:float():max(2) --actions
     q2_max[2] = q2_max[2]:float():max(2)
 
+    q2_max = (q2_max[1]+q2_max[2])/2 --take avg. of action and object
 
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)
     q2 = {}
-    q2[1] = q2_max[1]:clone():mul(self.discount):cmul(term)
-    q2[2] = q2_max[2]:clone():mul(self.discount):cmul(term)
+    q2[1] = q2_max:clone():mul(self.discount):cmul(term)
+    q2[2] = q2_max:clone():mul(self.discount):cmul(term)
 
 
     delta = {r:clone():float(), r:clone():float()}
@@ -264,7 +265,7 @@ function nql:qLearnMinibatch()
     -- Perform a minibatch Q-learning update:
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
 
-    local priority_ratio = 0.1 -- fraction of samples from 'priority' transitions
+    local priority_ratio = 0.25-- fraction of samples from 'priority' transitions
     local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size, priority_ratio)   
     -- print(s:size(), a:size(), o:size(), r:size(), s2:size(), term:size())
 
@@ -302,13 +303,15 @@ function nql:qLearnMinibatch()
     self.lr = math.max(self.lr, self.lr_end)
 
     --grad normalization
-    -- local max_norm = 10
-    -- local grad_norm = self.dw:norm()
-    -- if grad_norm > max_norm then
-    --   local scale_factor = max_norm/grad_norm
-    --   self.dw:mul(scale_factor)
-    --   print("Scaling down gradients. Norm:", grad_norm)
-    -- end
+    local max_norm = 50
+    local grad_norm = self.dw:norm()
+    if grad_norm > max_norm then
+      local scale_factor = max_norm/grad_norm
+      self.dw:mul(scale_factor)
+      if false and grad_norm > 1000 then
+          print("Scaling down gradients. Norm:", grad_norm)
+      end
+    end
 
     -- use gradients (original)
     -- self.g:mul(0.95):add(0.05, self.dw)

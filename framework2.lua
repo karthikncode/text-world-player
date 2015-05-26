@@ -145,12 +145,16 @@ function parse_game_output(text)
 		elseif 	 string.match(text[i], 'not available') 
 					or string.match(text[i], 'not find')
 					or string.match(text[i], "You can't get that.") 
-					or string.match(text[i], "you cannot") then
+					or string.match(text[i], "you cannot") 
+					or string.match(text[i], "splinter is already burning")
+					or string.match(text[i], "is no way")
+					or string.match(text[i], "not uproot them") then
 			if reward then
 				reward = reward + JUNK_CMD_REWARD			
 			else
 				reward = JUNK_CMD_REWARD			
 			end
+			running_text = running_text .. ' ' .. text[i]
 		-- normal line of text description			
 		else
 			running_text = running_text .. ' ' .. text[i]
