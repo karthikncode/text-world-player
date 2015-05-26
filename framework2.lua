@@ -151,6 +151,8 @@ function parse_game_output(text)
 			else
 				reward = JUNK_CMD_REWARD			
 			end
+			--also add text description
+			running_text = running_text .. ' ' .. text[i]
 		-- normal line of text description			
 		else
 			running_text = running_text .. ' ' .. text[i]

@@ -8,6 +8,7 @@ require 'utils'
 require 'nn'
 require 'rnn'
 require 'nngraph'
+require 'lstm_embedding' --for LSTM overridden functions
 
 local nql = torch.class('dqn.NeuralQLearner')
 
@@ -18,6 +19,7 @@ function nql:__init(args)
     else
         self.state_dim_multiplier = 1
     end
+    self.transfer   = args.transfer  -- whether to play agent in 'transfer' mode
     self.state_dim  = args.state_dim -- State dimensionality.
     self.actions    = args.actions
     self.n_actions  = #self.actions
@@ -80,7 +82,7 @@ function nql:__init(args)
     end
 
     local err, msg = pcall(require, self.network)
-    if not err then
+    if not err then        
         print('Preloading network file:', self.network)
         -- try to load saved agent
         local err_msg, exp = pcall(torch.load, self.network)
@@ -92,6 +94,30 @@ function nql:__init(args)
         else
             self.network = exp.model
         end
+
+        --Transfer learning (keep only LSTM weights)
+        if self.transfer then
+            local lstm_module = self.network:findModules('nn.LSTM')
+            assert(#lstm_module == 1)
+            lstm_module = lstm_module[1]
+            local w, dw = lstm_module:getParameters()
+            w = w:clone()
+            v, dv = self.network:getParameters()
+            --find offset
+            local offset = 1
+            while offset < w:size(1) and w[offset]~=v[offset] do
+                offset = offset+1
+            end
+            print("OFFSET: ", offset)
+            self.network:reset()
+
+            --restore LSTM params
+            v, dv = self.network:getParameters()
+            v[{{offset, offset+w:size(1)-1}}] = w
+            print("first five of w:",w[{{1,5}}])
+            --no need to update gradients since they are zero
+        end
+
     else
         print('Creating Agent Network from ' .. self.network)
         self.network = msg        
@@ -139,6 +165,11 @@ function nql:__init(args)
 
     self.w, self.dw = self.network:getParameters()    
     self.dw:zero()
+
+    print("first five of self.w:",self.w[{{1,5}}])
+
+    -- print(self.w:size())
+    -- print(self.network)
 
     self.deltas = self.dw:clone():fill(0)
 
@@ -189,9 +220,6 @@ function nql:getQUpdate(args)
     else
         target_q_net = self.network
     end
-    print(target_q_net)
-    print("NETWORK!!")
-    print(self.network)
 
     -- Compute {max_a Q(s_2, a), max_o Q(s_2, o)}.
     -- print("S: ", s)
@@ -200,12 +228,14 @@ function nql:getQUpdate(args)
         q2_max = target_q_net:forward(s2)
     else        
         local s2_tmp = tensor_to_table(s2, self.state_dim, self.hist_len)
-        print(s2_tmp)
+        -- print(s2_tmp)
         q2_max = target_q_net:forward(s2_tmp)
     end
     
     q2_max[1] = q2_max[1]:float():max(2) --actions
     q2_max[2] = q2_max[2]:float():max(2)
+
+    q2_max = (q2_max[1]+q2_max[2])/2 --take avg. of action and object
 
 
     -- Compute q2 = (1-terminal) * gamma * max_a Q(s2, a)

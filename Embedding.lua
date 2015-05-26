@@ -28,8 +28,8 @@ function nn.LookupTable:updateOutput(input)
 
 	if input:dim() == 1 then
 	  local nIndex = input:size(1)
-	  self.size[1] = nIndex
-	  self.output:index(self.weight, 1, input)
+	  self.size[1] = nIndex	  
+	  self.output:index(self.weight, 1, input:long())
 	elseif input:dim() == 2 then
 	  local nExample = input:size(1)
 	  local nIndex = input:size(2)
