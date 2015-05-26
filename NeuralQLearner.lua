@@ -189,9 +189,6 @@ function nql:getQUpdate(args)
     else
         target_q_net = self.network
     end
-    print(target_q_net)
-    print("NETWORK!!")
-    print(self.network)
 
     -- Compute {max_a Q(s_2, a), max_o Q(s_2, o)}.
     -- print("S: ", s)
@@ -200,7 +197,7 @@ function nql:getQUpdate(args)
         q2_max = target_q_net:forward(s2)
     else        
         local s2_tmp = tensor_to_table(s2, self.state_dim, self.hist_len)
-        print(s2_tmp)
+        -- print(s2_tmp)
         q2_max = target_q_net:forward(s2_tmp)
     end
     

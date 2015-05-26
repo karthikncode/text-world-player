@@ -372,10 +372,10 @@ function getState(logger, print_on)
 		print(text, reward)
 		print("Exits: ", exits)
 		print("Objects: ", objects_available)
-		sleep(0.1)
+		-- sleep(0.1)
 		if reward > 0 or reward <= -1 then
 			print(text, reward)
-			sleep(0.1)
+			sleep(5)
 		end
 	end
 	if reward >= 10 then
