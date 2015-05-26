@@ -20,14 +20,16 @@ game_path=$PWD"/roms/"
 env_params="useRGB=true"
 agent="NeuralQLearner"
 n_replay=1
-tutorial_world=1
+tutorial_world=0
 random_test=0
 
-recurrent=0
-netfile="\"bow_embedding\"" 
+recurrent=1
+# netfile="\"bow_embedding\"" 
 # netfile="\"rnn_embedding\""  
 # netfile="\"lstm_embedding\""  
-# netfile="\"logs/DQN3_0_1__FULL_Y.t7\""\
+# netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
+netfile="\"logs/lstm_rmsprop/DQN3_0_1_3_FULL_Y.t7\""
+# netfile="\"logs/bow_rmsprop/DQN3_0_1_4_FULL_Y.t7\""
 
 update_freq=4
 actrep=1
@@ -37,8 +39,8 @@ learn_start=$STEP_SIZE
 pool_frms_type="\"max\""
 pool_frms_size=2
 initial_priority="false"
-replay_memory=1000000
-eps=1
+replay_memory=100000
+eps=0.2
 eps_end=0.2
 # eps_endt=replay_memory
 eps_endt=200000
