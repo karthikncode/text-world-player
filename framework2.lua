@@ -6,7 +6,7 @@ local _ = require 'underscore'
 local DEBUG = false
 
 local DEFAULT_REWARD = -0.01
-local JUNK_CMD_REWARD = -0.1
+local JUNK_CMD_REWARD = -1
 local STEP_COUNT = 0 -- count the number of steps in current episode
 local BRIDGE_PASSED = false
 
@@ -374,7 +374,7 @@ function getState(logger, print_on)
 		print("Objects: ", objects_available)
 		-- sleep(0.1)
 		if reward > 0 or reward <= -1 then
-			print(text, reward)
+			print("DEBUG", text, reward)
 			sleep(5)
 		end
 	end
@@ -382,7 +382,7 @@ function getState(logger, print_on)
 		terminal = true
 		-- sleep(5)
 	end
-	if reward > 0.9 or reward <= -1 then
+	if reward > 0.9 then
 		print(text, reward)
 	end
 
