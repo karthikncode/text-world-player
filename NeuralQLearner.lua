@@ -131,6 +131,7 @@ function nql:__init(args)
     self.lastState = nil
     self.lastAction = nil
     self.lastObject = nil
+    self.lastAvailableObjects = nil
     self.v_avg = 0 -- V running average.
     self.tderr_avg = 0 -- TD error running average.
 
@@ -166,7 +167,7 @@ end
 
 
 function nql:getQUpdate(args)
-    local s, a, r, s2, term, delta, o
+    local s, a, r, s2, term, delta, o, available_objects
     local q, q2, q2_max
 
     s = args.s
@@ -175,7 +176,7 @@ function nql:getQUpdate(args)
     r = args.r
     s2 = args.s2
     term = args.term
-    available_objects = args.available_objects
+    available_objects = args.available_objects -- this is for s2
 
     -- The order of calls to forward is a bit odd in order
     -- to avoid unnecessary calls (we only need 2).
@@ -202,7 +203,11 @@ function nql:getQUpdate(args)
     end
     
     q2_max[1] = q2_max[1]:float():max(2) --actions
-    q2_max[2] = q2_max[2]:float():max(2)
+    q2_max[2] = q2_max[2]:float() -- objects
+
+    q2_max[2]:cmul(available_objects:float())
+    q2_max[2][q2_max[2]:eq(0)] = -1e30
+    q2_max[2] = q2_max[2]:max(2)
 
     q2_max = (q2_max[1]+q2_max[2])/2 --take avg. of action and object
 
@@ -441,6 +446,7 @@ function nql:perceive(reward, state, terminal, testing, testing_ep, available_ob
     self.lastAction = actionIndex
     self.lastObject = objectIndex
     self.lastTerminal = terminal
+    self.lastAvailableObjects = available_objects
 
     if self.target_q and self.numSteps % self.target_q == 1 then
         self.target_network = self.network:clone()
