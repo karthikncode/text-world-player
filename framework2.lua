@@ -365,7 +365,7 @@ function getState(logger, print_on)
 		end
 		exits = exits2
 		objects_available = objects_available2
-		-- reward = reward + tmp_reward
+		reward = reward + tmp_reward
 	end
 
 	if DEBUG or print_on then
@@ -378,7 +378,7 @@ function getState(logger, print_on)
 			sleep(5)
 		end
 	end
-	if reward >= 10 then
+	if reward > 9 then
 		terminal = true
 		-- sleep(5)
 	end
