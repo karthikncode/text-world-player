@@ -5,7 +5,7 @@
 
 # exp_folder="logs/tutorial_lstm_priority5_tiedAO_hist1/"
 # exp_folder="logs/lstm3_rmsprop/"
-exp_folder="logs/lstm_rmsprop_tut2/"
+exp_folder="logs/tmp/"
 #exp_folder="logs/lstm_rmsprop_tut3/"
 mkdir -p $exp_folder;
 
@@ -48,7 +48,7 @@ lr=0.0005
 
 agent_type=$exp_folder"DQN3_0_1"
 agent_name=$agent_type"_"$1"_FULL_Y"
-state_dim=300
+state_dim=100
 ncols=1
 agent_params="lr="$lr",ep="$eps",ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size="$minibatch_size",rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,target_q="$STEP_SIZE",clip_delta=1,min_reward=-1,max_reward=10"
 steps=2000000
