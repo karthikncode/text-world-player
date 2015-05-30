@@ -1,5 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from nltk.corpus import stopwords
+
+STOPWORDS = stopwords.words('english')
 
 
 #read in tsne data
@@ -14,6 +17,7 @@ datay = []
 
 for line in f[:-1]:
 	label, x, y = line.split()
+	if label in STOPWORDS: continue
 	x = float(x)
 	y = float(y)
 	datax.append(x)

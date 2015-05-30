@@ -182,7 +182,7 @@ function step_game(action_index, object_index, gameLogger)
 		print(actions[action_index] .. ' ' .. objects[object_index])
 	end
 	STEP_COUNT = STEP_COUNT + 1
-	return getState(gameLogger)
+	return getState(gameLogger, actions[action_index])
 end
 
 -- starts a new game
@@ -294,7 +294,7 @@ function convert_text_to_ordered_list(input_text)
 	
 	local line = string.gsub(input_text, "{.","")
 	local list_words = split(line, "%a+")
-	for i=1,#list_words do			
+	for i=1,math.min(#list_words, STATE_DIM) do			
 		local word = list_words[i]
 		word = word:lower()
 		if REVERSE then cnt2 = STATE_DIM+1-cnt else cnt2 = cnt end
@@ -341,7 +341,7 @@ function findObjectIndices(list)
 end
 
 
-function getState(logger, print_on)
+function getState(logger, prev_command)
 	local terminal = (STEP_COUNT >= MAX_STEPS)
 	local inData = data_in()
 	while #inData == 0 or not string.match(inData[#inData],'<EOM>') do	
@@ -353,7 +353,7 @@ function getState(logger, print_on)
 	local text, reward, exits, objects_available = parse_game_output(inData)		
 
 	-- look only if command was junk
-	if true or reward == JUNK_CMD_REWARD then		
+	if reward == JUNK_CMD_REWARD or (prev_command and prev_command ~='go') then		
 		data_out('look')
 		local inData2 = data_in()
 		while #inData2 == 0 or not string.match(inData2[#inData2],'<EOM>') do	
@@ -365,17 +365,17 @@ function getState(logger, print_on)
 		end
 		exits = exits2
 		objects_available = objects_available2
-		reward = reward + tmp_reward
+		reward = reward + tmp_reward	
 	end
 
-	if DEBUG or print_on then
+	if DEBUG then
 		print(text, reward)
 		print("Exits: ", exits)
 		print("Objects: ", objects_available)
 		-- sleep(0.1)
 		if reward > 0 or reward <= -1 then
 			print("DEBUG", text, reward)
-			sleep(5)
+			-- sleep(5)
 		end
 	end
 	if reward > 9 then

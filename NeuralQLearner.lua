@@ -312,15 +312,15 @@ function nql:qLearnMinibatch()
     self.lr = math.max(self.lr, self.lr_end)
 
     --grad normalization
-    local max_norm = 50
-    local grad_norm = self.dw:norm()
-    if grad_norm > max_norm then
-      local scale_factor = max_norm/grad_norm
-      self.dw:mul(scale_factor)
-      if false and grad_norm > 1000 then
-          print("Scaling down gradients. Norm:", grad_norm)
-      end
-    end
+    -- local max_norm = 50
+    -- local grad_norm = self.dw:norm()
+    -- if grad_norm > max_norm then
+    --   local scale_factor = max_norm/grad_norm
+    --   self.dw:mul(scale_factor)
+    --   if false and grad_norm > 1000 then
+    --       print("Scaling down gradients. Norm:", grad_norm)
+    --   end
+    -- end
 
     -- use gradients (original)
     -- self.g:mul(0.95):add(0.05, self.dw)
