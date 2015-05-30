@@ -367,4 +367,5 @@ return {
 	step = step_game,
 	newGame = newGame,
 	nextRandomGame = nextRandomGame,
+	vector_function = vector_function
 }

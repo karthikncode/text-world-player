@@ -50,6 +50,7 @@ cmd:option('-game_num', 1, 'game number (for parallel game servers)')
 cmd:option('-wordvec_file', 'wordvec.eng' , 'Word vector file')
 cmd:option('-tutorial_world', 1, 'play tutorial_world')
 cmd:option('-random_test', 0, 'test random policy')
+cmd:option('-analyze_test', 0, 'load model and analyze')
 cmd:option('-use_wordvec', 0, 'use word vec')
 
 cmd:text()
@@ -63,6 +64,8 @@ MAX_STEPS = opt.max_steps
 WORDVEC_FILE = opt.wordvec_file
 TUTORIAL_WORLD = (opt.tutorial_world==1)
 RANDOM_TEST = (opt.random_test==1)
+ANALYZE_TEST = (opt.analyze_test==1)
+
 print(STATE_DIM)
 print("Tutorial world", TUTORIAL_WORLD)
 
@@ -410,7 +413,26 @@ while step < opt.steps do
             embedding_save[symbols[i]] = embedding_mat[i]
         end
         embedding_save["NULL"] = embedding_mat[embedding_mat:size(1)]        
-        torch.save(filename..'.embeddings.t7', {embeddings = embedding_save, symbols=symbols})
+
+        -- description embeddings
+        local desc_embeddings
+        if ANALYZE_TEST then
+            require 'descriptions'
+            desc_embeddings = {}
+            for i=1, #DESCRIPTIONS do
+                local embeddings = {}
+                for j=1, #DESCRIPTIONS[i] do
+                    local input_vec = framework.vector_function(DESCRIPTIONS[i][j])
+                    local state_tmp = tensor_to_table(input_vec, self.state_dim, self.hist_len)        
+                    local output_vec = LSTM_MODEL:forward(state_tmp)
+                    table.insert(embeddings, output_vec)
+                end
+                table.insert(desc_embeddings, embeddings)
+            end
+        end
+
+
+        torch.save(filename..'.embeddings.t7', {embeddings = embedding_save, symbols=symbols, desc_embeddings=desc_embeddings})
 
         agent.valid_s, agent.valid_a, agent.valid_r, agent.valid_s2,
             agent.valid_term = s, a, r, s2, term
@@ -419,6 +441,10 @@ while step < opt.steps do
         print('Saved:', filename .. '.t7')
         io.flush()
         collectgarbage()
+
+        if ANALYZE_TEST then
+            return
+        end
     end
 end
 

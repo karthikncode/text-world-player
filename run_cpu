@@ -5,7 +5,7 @@
 
 # exp_folder="logs/tutorial_lstm_priority5_tiedAO_hist1/"
 # exp_folder="logs/lstm3_rmsprop/"
-exp_folder="logs/tmp/"
+exp_folder="logs/analysis/"
 #exp_folder="logs/lstm_rmsprop_tut3/"
 mkdir -p $exp_folder;
 
@@ -22,13 +22,14 @@ agent="NeuralQLearner"
 n_replay=1
 tutorial_world=1
 random_test=0
+analyze_test=1
 
 recurrent=1
 # netfile="\"bow_embedding\"" 
 # netfile="\"rnn_embedding\""  
-netfile="\"lstm_embedding\""  
+# netfile="\"lstm_embedding\""  
 # netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
-# netfile="\"logs/lstm_rmsprop/DQN3_0_1_3_FULL_Y.t7\""
+netfile="\"logs/lstm_rmsprop/DQN3_0_1_3_FULL_Y.t7\""
 # netfile="\"logs/bow_rmsprop/DQN3_0_1_4_FULL_Y.t7\""
 
 update_freq=4
@@ -64,4 +65,4 @@ num_threads=1
 args="-framework $FRAMEWORK -recurrent $recurrent -game_path $game_path -name $agent_name -env_params $env_params -agent $agent -agent_params $agent_params -steps $steps -eval_freq $eval_freq -eval_steps $eval_steps -prog_freq $prog_freq -save_freq $save_freq -actrep $actrep -gpu $gpu -random_starts $random_starts -pool_frms $pool_frms -seed $seed -threads $num_threads"
 echo $args
 
-th agent.lua $args -saveNetworkParams -exp_folder $exp_folder  -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim -max_steps $max_steps -tutorial_world $tutorial_world -random_test $random_test;
+th agent.lua $args -saveNetworkParams -exp_folder $exp_folder  -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim -max_steps $max_steps -tutorial_world $tutorial_world -random_test $random_test -analyze_test $analyze_test;
