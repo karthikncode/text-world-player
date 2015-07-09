@@ -1,4 +1,4 @@
--- Framework for tutorial
+-- Framework for fantasy world
 
 -- Layer to create quests and act as middle-man between Evennia and Agent
 require 'utils'
@@ -282,6 +282,32 @@ function convert_text_to_bow(input_text)
 	return vector
 end
 
+-- Args: {
+--	1: desc of room
+--	2: quest desc
+-- }
+function convert_text_to_bigram(input_text)
+	local vector = torch.zeros(#symbols*#symbols)
+	for j, line in pairs(input_text) do
+		line = input_text[j]
+		local list_words = split(line, "%a+")
+		for i=1,#list_words-1 do			
+			local word = list_words[i]
+			word = word:lower()
+			next_word = list_words[i+1]:lower()
+			--ignore words not in vocab
+			if symbol_mapping[word] and symbol_mapping[next_word] then	
+				vector[(symbol_mapping[word]-1)* (#symbols) + symbol_mapping[next_word]] 
+					= vector[(symbol_mapping[word]-1)* (#symbols) + symbol_mapping[next_word]]  + 1
+			else
+				print(word .. ' not in vocab')
+			end
+
+		end
+	end
+	return vector
+end
+
 
 -- for recurrent and other networks
 -- assumes that the symbol mapping has already been created
@@ -317,7 +343,8 @@ end
 if RECURRENT == 1 then
 	vector_function = convert_text_to_ordered_list
 else
-	vector_function = convert_text_to_bow
+	-- vector_function = convert_text_to_bow
+	vector_function = convert_text_to_bigram
 end
 -------------------------------------------------------------------
 

@@ -5,7 +5,8 @@
 
 # exp_folder="logs/tutorial_lstm_priority5_tiedAO_hist1/"
 # exp_folder="logs/lstm3_rmsprop/"
-exp_folder="logs/analysis/"
+exp_folder="logs/rebuttal_bigram_tut/"
+# exp_folder="logs/rebuttal_simplebow_tut/"
 #exp_folder="logs/lstm_rmsprop_tut3/"
 mkdir -p $exp_folder;
 
@@ -22,14 +23,15 @@ agent="NeuralQLearner"
 n_replay=1
 tutorial_world=1
 random_test=0
-analyze_test=1
+analyze_test=0
 
-recurrent=1
-# netfile="\"bow_embedding\"" 
+recurrent=0
+netfile="\"bow_embedding\"" 
+# netfile="\"bow_embedding_simple\"" 
 # netfile="\"rnn_embedding\""  
 # netfile="\"lstm_embedding\""  
 # netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
-netfile="\"logs/lstm_rmsprop/DQN3_0_1_3_FULL_Y.t7\""
+# netfile="\"logs/lstm_rmsprop/DQN3_0_1_3_FULL_Y.t7\""
 # netfile="\"logs/bow_rmsprop/DQN3_0_1_4_FULL_Y.t7\""
 
 update_freq=4

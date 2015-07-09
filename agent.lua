@@ -145,6 +145,8 @@ if opt.agent_params then
     if RECURRENT == 0 then
         if vector_function == convert_text_to_bow2 then            
             opt.agent_params.state_dim = 2 * (#symbols)
+        elseif vector_function == convert_text_to_bigram then
+            opt.agent_params.state_dim = (#symbols*#symbols)
         else
             opt.agent_params.state_dim = (#symbols)
         end
