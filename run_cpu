@@ -5,7 +5,7 @@
 
 # exp_folder="logs/tutorial_lstm_priority5_tiedAO_hist1/"
 # exp_folder="logs/lstm3_rmsprop/"
-exp_folder="logs/rebuttal_bigram_tut/"
+exp_folder="logs/rebuttal_bigram_tut2/"
 # exp_folder="logs/rebuttal_simplebow_tut/"
 #exp_folder="logs/lstm_rmsprop_tut3/"
 mkdir -p $exp_folder;

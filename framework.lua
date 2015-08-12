@@ -25,7 +25,7 @@ actions = {"eat", "sleep", "watch", "exercise", "go"} -- hard code in
 objects = {'north','south','east','west'} -- read rest from build file
 -- order in build file: tv, bike, apple, bed
 
-extra_vocab = {'not','but'} -- words that are necessary for vocab but not in other text
+extra_vocab = {'not','but', 'now'} -- words that are necessary for vocab but not in other text
 symbols = {}
 symbol_mapping = {}
 
@@ -46,7 +46,7 @@ end
 
 function get_quest_text(quest_num) 	
 	-- return quests[quest_num]  --simple quests
-	return "Not " .. quests[mislead_quest_checklist[1]] .. ' but ' .. quests[quest_num] --randomized complex quests
+	return "Not " .. quests[mislead_quest_checklist[1]] .. ' now but ' .. quests[quest_num] ..' now.' --randomized complex quests
 end
 
 

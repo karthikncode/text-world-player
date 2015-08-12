@@ -286,27 +286,33 @@ end
 --	1: desc of room
 --	2: quest desc
 -- }
+bigram_mapping = {}
+bigrams = {}
 function convert_text_to_bigram(input_text)
-	local vector = torch.zeros(#symbols*#symbols)
-	for j, line in pairs(input_text) do
-		line = input_text[j]
-		local list_words = split(line, "%a+")
-		for i=1,#list_words-1 do			
-			local word = list_words[i]
-			word = word:lower()
-			next_word = list_words[i+1]:lower()
-			--ignore words not in vocab
-			if symbol_mapping[word] and symbol_mapping[next_word] then	
-				vector[(symbol_mapping[word]-1)* (#symbols) + symbol_mapping[next_word]] 
-					= vector[(symbol_mapping[word]-1)* (#symbols) + symbol_mapping[next_word]]  + 1
-			else
-				print(word .. ' not in vocab')
-			end
+	local vector = torch.zeros(#symbols * 5)
+	local line = string.gsub(input_text, "{.","")
+	local list_words = split(line, "%a+")
+	for i=1,#list_words-1 do			
+		local word = list_words[i]
+		word = word:lower()
+		--ignore words not in vocab
+		next_word = list_words[i+1]:lower()
+		bigram = word .. ' ' .. next_word
+		--ignore words not in vocab
+		if not bigram_mapping[bigram] then	
+			table.insert(bigrams, bigram)
+			bigram_mapping[bigram] = #bigrams
 
+			vector[bigram_mapping[bigram]] = vector[bigram_mapping[bigram]]  + 1
+		else
+			-- print(word .. ' not in vocab')
 		end
+
 	end
+
 	return vector
 end
+
 
 
 -- for recurrent and other networks
@@ -344,7 +350,7 @@ if RECURRENT == 1 then
 	vector_function = convert_text_to_ordered_list
 else
 	-- vector_function = convert_text_to_bow
-	vector_function = convert_text_to_bigram
+	vector_function = convert_text_to_bigram -- for bigram
 end
 -------------------------------------------------------------------
 
