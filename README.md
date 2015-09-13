@@ -1,7 +1,11 @@
-Requirements: 'luasocket' package for client connection.
-'rnn' package for LSTM (nnx version is buggy with Sequencer for batches)
+Prerequisites
+--------------
+Make sure you've setup the game environment using instructions at https://github.com/mrkulk/text-world
 
-Checks:
-1. Make sure evennia is reinstalled with our customizations.
-2. Make sure only one evennia server is running.
-3. Run @batchcommand text_sims.build
+Package requirements
+---------------
+1. 'luasocket' for network connections
+2. 'rnn'  (https://github.com/Element-Research/rnn)
+3. 'underscore'
+
+All these packages can be installed using `luarocks install <pkg>`
