@@ -9,7 +9,7 @@ local STEP_COUNT = 0 -- count the number of steps in current episode
 
 --Simple quests
 quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
-
+quests_mislead = {'You are not hungry.','You are not sleepy.', 'You are not bored.', 'You are not getting fat.'}
 --(somewhat) complex quests
 -- quests = {'You are not sleepy but hungry.',
 -- 					'You are not hungry but sleepy.',
@@ -46,7 +46,8 @@ end
 
 function get_quest_text(quest_num) 	
 	-- return quests[quest_num]  --simple quests
-	return "Not " .. quests[mislead_quest_checklist[1]] .. ' now but ' .. quests[quest_num] ..' now.' --randomized complex quests
+	-- return "Not " .. quests[mislead_quest_checklist[1]] .. ' now but ' .. quests[quest_num] ..' now.' --randomized complex quests
+	return quests_mislead[mislead_quest_checklist[1]] .. ' now but ' .. quests[quest_num] ..' now.' --randomized complex quests
 end
 
 

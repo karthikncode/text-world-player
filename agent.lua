@@ -146,7 +146,11 @@ if opt.agent_params then
         if vector_function == convert_text_to_bow2 then            
             opt.agent_params.state_dim = 2 * (#symbols)
         elseif vector_function == convert_text_to_bigram then
-            opt.agent_params.state_dim = (#symbols*5)
+            if TUTORIAL_WORLD then
+                opt.agent_params.state_dim = (#symbols*5)
+            else
+                opt.agent_params.state_dim = (#symbols*#symbols)
+            end
         else
             opt.agent_params.state_dim = (#symbols)
         end
