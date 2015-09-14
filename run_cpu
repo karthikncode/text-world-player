@@ -4,55 +4,60 @@
 #game_num is 1, 2, 3 ...
 #----------------------------------
 
-# exp_folder="logs/tutorial_lstm_priority5_tiedAO_hist1/"
-# exp_folder="logs/lstm3_rmsprop/"
-# exp_folder="logs/rebuttal_bigram3/"
-# exp_folder="logs/rebuttal_simplebow3/"
-exp_folder="logs/rebuttal_simplebigram3/"
-#exp_folder="logs/lstm_rmsprop_tut3/"
+#specify the output folder for logging stats and graphs
+exp_folder="logs/run1/"
+
 mkdir -p $exp_folder;
 
-FRAMEWORK="alewrap"
-STEP_SIZE=1000 #step size for learn_start, eval, saving, etc.
-hist_len=1
+STEP_SIZE=1000 #step size for learn_start, eval, saving, etc. 
+hist_len=1 #Number of previous states to consider
 max_steps=20 #max steps  in a single episode
-minibatch_size=64
-quest_levels=1
+minibatch_size=64 #batch size of transitions used in updates
+quest_levels=1 
 game_num=$1
-game_path=$PWD"/roms/"
-env_params="useRGB=true"
 agent="NeuralQLearner"
 n_replay=1
+
+#Set this to 1 if playing the Fantasy world
 tutorial_world=0
+
+#Baselines and for analysis
 random_test=0
 analyze_test=0
 
+#Set this to 1 to use the RNN/LSTM for representation generation
 recurrent=0
-# netfile="\"bow_embedding\"" 
-netfile="\"bow_embedding_simple\"" 
-# netfile="\"rnn_embedding\""  
-# netfile="\"lstm_embedding\""  
-# netfile="\"logs/DQN3_0_1__FULL_Y.t7\""
-# netfile="\"logs/lstm_rmsprop/DQN3_0_1_3_FULL_Y.t7\""
-# netfile="\"logs/bow_rmsprop/DQN3_0_1_4_FULL_Y.t7\""
 
+#Set this to 1 (along with bow_embedding for netfile)
+# to use bigram representation
+bigram=0
+
+# The models below each represent the type of representation used.
+# One of these options MUST be used. 
+#-------------------------------
+netfile="\"bow_embedding\""  # BOW-DQN or BI-DQN
+# netfile="\"bow_embedding_simple\""  #BOW-LIN or BI-LIN
+# netfile="\"rnn_embedding\""   #RNN-DQN
+# netfile="\"lstm_embedding\""  #LSTM=DQN
+
+# You can also start by loading a model from a previous run
+# netfile="\"logs/run1\""
+
+#params for DQN
 update_freq=4
 actrep=1
 discount=0.5
 seed=1
 learn_start=$STEP_SIZE
-pool_frms_type="\"max\""
-pool_frms_size=2
 initial_priority="false"
 replay_memory=100000
 eps=1
 eps_end=0.2
-# eps_endt=replay_memory
 eps_endt=200000
 lr=0.0005
 
-agent_type=$exp_folder"DQN3_0_1"
-agent_name=$agent_type"_"$1"_FULL_Y"
+agent_type=$exp_folder"DQN"
+agent_name=$agent_type
 state_dim=100
 ncols=1
 agent_params="lr="$lr",ep="$eps",ep_end="$eps_end",ep_endt="$eps_endt",discount="$discount",hist_len="$hist_len",learn_start="$learn_start",replay_memory="$replay_memory",update_freq="$update_freq",n_replay="$n_replay",network="$netfile",state_dim="$state_dim",minibatch_size="$minibatch_size",rescale_r=1,ncols="$ncols",bufferSize=512,valid_size=500,target_q="$STEP_SIZE",clip_delta=1,min_reward=-1,max_reward=10"
@@ -63,10 +68,9 @@ prog_freq=$STEP_SIZE
 save_freq=$STEP_SIZE
 gpu=-1
 random_starts=30
-pool_frms="type="$pool_frms_type",size="$pool_frms_size
 num_threads=1
 
-args="-framework $FRAMEWORK -recurrent $recurrent -game_path $game_path -name $agent_name -env_params $env_params -agent $agent -agent_params $agent_params -steps $steps -eval_freq $eval_freq -eval_steps $eval_steps -prog_freq $prog_freq -save_freq $save_freq -actrep $actrep -gpu $gpu -random_starts $random_starts -pool_frms $pool_frms -seed $seed -threads $num_threads"
+args="-recurrent $recurrent -name $agent_name -agent $agent -agent_params $agent_params -steps $steps -eval_freq $eval_freq -eval_steps $eval_steps -prog_freq $prog_freq -save_freq $save_freq -actrep $actrep -gpu $gpu -random_starts $random_starts -seed $seed -threads $num_threads"
 echo $args
 
 th agent.lua $args -saveNetworkParams -exp_folder $exp_folder  -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim -max_steps $max_steps -tutorial_world $tutorial_world -random_test $random_test -analyze_test $analyze_test;

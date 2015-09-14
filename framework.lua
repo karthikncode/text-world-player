@@ -10,22 +10,17 @@ local STEP_COUNT = 0 -- count the number of steps in current episode
 --Simple quests
 quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
 quests_mislead = {'You are not hungry.','You are not sleepy.', 'You are not bored.', 'You are not getting fat.'}
---(somewhat) complex quests
--- quests = {'You are not sleepy but hungry.',
--- 					'You are not hungry but sleepy.',
--- 					'You are not getting fat but bored.',
--- 					'You are not bored but getting fat.'} 
 
 quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
 quest_checklist = {}
 mislead_quest_checklist = {}
 rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
 
-actions = {"eat", "sleep", "watch", "exercise", "go"} -- hard code in
+actions = {"eat", "sleep", "watch", "exercise", "go"} 
 objects = {'north','south','east','west'} -- read rest from build file
 -- order in build file: tv, bike, apple, bed
 
-extra_vocab = {'not','but', 'now'} -- words that are necessary for vocab but not in other text
+extra_vocab = {'not','but', 'now'} -- words that are necessary for initial vocab building but not in other text
 symbols = {}
 symbol_mapping = {}
 
@@ -45,8 +40,6 @@ function random_teleport()
 end
 
 function get_quest_text(quest_num) 	
-	-- return quests[quest_num]  --simple quests
-	-- return "Not " .. quests[mislead_quest_checklist[1]] .. ' now but ' .. quests[quest_num] ..' now.' --randomized complex quests
 	return quests_mislead[mislead_quest_checklist[1]] .. ' now but ' .. quests[quest_num] ..' now.' --randomized complex quests
 end
 
@@ -55,7 +48,6 @@ function random_quest()
 	indxs = torch.randperm(#quests)
 	for i=1,QUEST_LEVELS do
 		local quest_index = indxs[i]
-		-- local quest_index = torch.random(1, #quests)
 		quest_checklist[#quest_checklist+1] = quest_index
 	end
 
@@ -79,7 +71,6 @@ function login(user, password)
 end
 
 --Function to parse the output of the game (to extract rewards, etc. )
-
 function parse_game_output(text)
 	-- extract REWARD if it exists
 	-- text is a list of sentences
@@ -265,7 +256,7 @@ function convert_text_to_bow2(input_text)
 	return vector
 end
 
--- for recurrent and other networks
+-- for recurrent networks
 -- assumes that the symbol mapping has already been created
 -- STATE_DIM = max desc/quest length
 function convert_text_to_ordered_list(input_text)
@@ -293,7 +284,7 @@ function convert_text_to_ordered_list(input_text)
 	return vector
 end
 
--- for recurrent and other networks
+-- for recurrent networks
 -- Separate lists for description and quest.
 -- STATE_DIM = max desc/quest length
 function convert_text_to_ordered_list2(input_text)
@@ -324,11 +315,10 @@ end
 -------------------------VECTOR function -------------------------
 if RECURRENT == 1 then
 	vector_function = convert_text_to_ordered_list
-	-- vector_function = convert_text_to_ordered_list2
-else
-	-- vector_function = convert_text_to_bow
+elseif BIGRAM then
 	vector_function = convert_text_to_bigram
-	-- vector_function = convert_text_to_bow2
+else
+	vector_function = convert_text_to_bow	
 end
 -------------------------------------------------------------------
 

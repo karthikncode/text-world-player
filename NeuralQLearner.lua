@@ -1,9 +1,3 @@
---[[
-Copyright (c) 2014 Google Inc.
-
-See LICENSE file for full terms of limited license.
-]]
-
 require 'utils'
 require 'nn'
 require 'rnn'
@@ -60,9 +54,7 @@ function nql:__init(args)
 
     self.gpu            = args.gpu
 
-    self.ncols          = args.ncols or 1  -- number of color channels in input
-    self.input_dims     = args.input_dims or {self.hist_len*self.ncols, 84, 84}
-    self.preproc        = args.preproc  -- name of preprocessing network
+    self.ncols          = args.ncols or 1
     self.histType       = args.histType or "linear"  -- history type to use
     self.histSpacing    = args.histSpacing or 1
     self.nonTermProb    = args.nonTermProb or 1
@@ -192,13 +184,10 @@ function nql:getQUpdate(args)
     end
 
     -- Compute {max_a Q(s_2, a), max_o Q(s_2, o)}.
-    -- print("S: ", s)
-    -- print("S2: ", s2)
     if RECURRENT == 0 then
         q2_max = target_q_net:forward(s2)
     else        
         local s2_tmp = tensor_to_table(s2, self.state_dim, self.hist_len)
-        -- print(s2_tmp)
         q2_max = target_q_net:forward(s2_tmp)
     end
     
@@ -247,7 +236,6 @@ function nql:getQUpdate(args)
     delta[1]:add(-1, q[1])
     delta[2]:add(-1, q[2])
 
-    -- @Karthik
     if self.clip_delta then
         delta[1][delta[1]:ge(self.clip_delta)] = self.clip_delta
         delta[1][delta[1]:le(-self.clip_delta)] = -self.clip_delta
@@ -276,20 +264,9 @@ function nql:qLearnMinibatch()
 
     local priority_ratio = 0.25-- fraction of samples from 'priority' transitions
     local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size, priority_ratio)   
-    -- print(s:size(), a:size(), o:size(), r:size(), s2:size(), term:size())
 
     local targets, delta, q2_max = self:getQUpdate{s=s, a=a, o=o, r=r, s2=s2,
         term=term, update_qmax=true, available_objects=available_objects}
-
-    -- print("s", s:mean(), s:norm())
-    -- print("a", a)
-    -- print("o", o)
-    -- print("r", r)
-    -- print("targets", targets[1])
-    -- print("delta", delta[1])
-    -- print("q2_max", q2_max[1])
-    -- print(q2_max)
-    -- local tmp__ = io.read()
 
     -- zero gradients of parameters
     self.dw:zero()
@@ -332,14 +309,14 @@ function nql:qLearnMinibatch()
     -- self.tmp:add(0.01)
     -- self.tmp:sqrt()
 
-    --rmsprop (karthik)
+    --rmsprop
     local smoothing_value = 1e-8
     self.tmp:cmul(self.dw, self.dw)
     self.g:mul(0.9):add(0.1, self.tmp)
     self.tmp = torch.sqrt(self.g)
     self.tmp:add(smoothing_value)  --negative learning rate
 
-    --AdaGrad (karthik)
+    --AdaGrad
     -- self.tmp:cmul(self.dw, self.dw)
     -- self.g2:cmul(self.g, self.g)
     -- self.g2:add(self.tmp)
@@ -350,8 +327,6 @@ function nql:qLearnMinibatch()
 
     -- accumulate update
     self.deltas:mul(0):addcdiv(self.lr, self.dw, self.tmp)
-    -- print(self.tmp:norm())
-    -- print(self.deltas:norm())
 
     self.w:add(self.deltas)
 

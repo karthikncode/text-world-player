@@ -28,12 +28,3 @@ return function(args)
 
     return create_network(args)
 end
-
-
--- for action-object linking
-   -- local mlp_out = nn.ConcatTable()        
-   --      mlp_out:add(nn.Identity())
-   --      local action_object_nn = nn.Sequential()
-   --      action_object_nn:add(nn.Linear(args.n_actions, n_hid))
-   --      action_object_nn:add(nn.Linear(n_hid, args.n_objects))
-   --      mlp_out:add(action_object_nn)

@@ -4,7 +4,7 @@ require 'rnn'  -- IMP: dont use LSTM package from nnx - buggy
 require 'nngraph'
 
 --require 'cunn'
--- IMP if args is not passed, it takes from global 'args'
+-- IMP if args is not passed, global 'args' are taken.
 
 LSTM_MODEL = nil
 
@@ -57,12 +57,10 @@ return function(args)
        if self.step == 1 then
           prevOutput = self.zeroTensor
           prevCell = self.zeroTensor
-           -- if input:dim() == 2 then
-          --@karthik: since we have batches of symbols, we need to do this explicitly
+
+          -- since we have batches of symbols, we need to do this explicitly
           self.zeroTensor:resize(input:size(1), self.outputSize):zero()
-          -- else
-             -- self.zeroTensor:resize(self.outputSize):zero()
-          -- end
+
           self.outputs[0] = self.zeroTensor
           self.cells[0] = self.zeroTensor
        else
@@ -110,6 +108,7 @@ return function(args)
         lstm_seq = nn.Sequential()
         lstm_seq:add(nn.Sequencer(l))
         
+        --Take only last output
         -- lstm_seq:add(nn.SelectTable(args.state_dim))
         -- lstm_seq:add(nn.Linear(n_hid, n_hid))
 
@@ -117,13 +116,12 @@ return function(args)
         -- lstm_seq:add(nn.JoinTable(2))
         -- lstm_seq:add(nn.Linear(args.state_dim * n_hid, n_hid))
 
+        -- Mean pooling
         lstm_seq:add(nn.CAddTable())
         lstm_seq:add(nn.Linear(n_hid, n_hid))
         
 
         lstm_seq:add(nn.Rectifier())
-        -- lstm_seq:add(nn.Linear(n_hid, n_hid))
-        -- lstm_seq:add(nn.Sigmoid())
 
         parallel_flows = nn.ParallelTable()
         print("state dim multiplier", args.state_dim_multiplier)

@@ -12,10 +12,7 @@ cmd:option('-exp_folder', '', 'name of folder where current exp state is being s
 cmd:option('-framework', '', 'name of training framework')
 
 cmd:option('-env', '', 'name of environment to use')
-cmd:option('-game_path', '', 'path to environment file (ROM)')
 cmd:option('-env_params', '', 'string of environment parameters')
-cmd:option('-pool_frms', '',
-           'string of frame pooling parameters (e.g.: size=2,type="max")')
 cmd:option('-actrep', 1, 'how many times to repeat action')
 cmd:option('-random_starts', 0, 'play action 0 between 1 and random_starts ' ..
            'number of times at the start of each training episode')
@@ -29,6 +26,7 @@ cmd:option('-saveNetworkParams', false,
            'saves the agent network in a separate file')
 
 cmd:option('-recurrent', 0,'bow or recurrent')
+cmd:option('-bigram', 0,'bigram version')
 cmd:option('-quest_levels', 1,'# of quests to complete in each run')
 cmd:option('-state_dim', 100, 'max dimensionality of raw state (stream of symbols or BOW vocab)')
 cmd:option('-max_steps', 100,'max steps per episode')
@@ -58,6 +56,7 @@ cmd:text()
 local opt = cmd:parse(arg)
 print(opt)
 RECURRENT = opt.recurrent
+BIGRAM = opt.bigram
 QUEST_LEVELS = opt.quest_levels
 STATE_DIM = opt.state_dim
 MAX_STEPS = opt.max_steps
@@ -109,7 +108,6 @@ else
 end
 
 print("#symbols", #symbols)
-print(framework.getObjects())
 
 EMBEDDING.weight[#symbols+1]:mul(0) --zero out NULL INDEX vector
 
@@ -216,12 +214,8 @@ while step < opt.steps do
     	    else
     	        priority = false
     	    end
-    	else
-    	    -- if opt.random_starts > 0 then
-    	    --     state, reward, terminal, available_objects = framework.nextRandomGame()
-    	    -- else
-    	    state, reward, terminal, available_objects = framework.newGame()
-    	    -- end
+    	else    	    
+    	    state, reward, terminal, available_objects = framework.newGame()    	    
     	end
 
     	if step % opt.prog_freq == 0 then
@@ -283,7 +277,6 @@ while step < opt.steps do
                     gameLogger:write(objects[i],' ', q_func[2][i], '\n')
                 end
 
-                -- gameLogger:write(table.tostring(q_func), '\n')
             else
                 gameLogger:write("Random action\n")
             end

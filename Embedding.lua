@@ -10,7 +10,7 @@ function readWordVec(filename)
 	local parts
 	local wordVec = {} -- global
 	for line in file:lines() do
-		parts = line:split(" ")	 -- TODO
+		parts = line:split(" ")	
 		wordVec[parts[1]] = _.rest(parts)
 	end
 	return wordVec

@@ -2,6 +2,7 @@
 
 -- Layer to create quests and act as middle-man between Evennia and Agent
 require 'utils'
+require 'fantasy_vocab'
 local _ = require 'underscore'
 local DEBUG = false
 
@@ -10,21 +11,7 @@ local JUNK_CMD_REWARD = -1
 local STEP_COUNT = 0 -- count the number of steps in current episode
 local BRIDGE_PASSED = false
 
---Simple quests
--- quests = {'You are hungry.','You are sleepy.', 'You are bored.', 'You are getting fat.'}
-
---(somewhat) complex quests
--- quests = {'You are not sleepy but hungry.',
--- 					'You are not hungry but sleepy.',
--- 					'You are not getting fat but bored.',
--- 					'You are not bored but getting fat.'} 
-
--- quest_actions = {'eat', 'sleep', 'watch' ,'exercise'} -- aligned to quests above
--- quest_checklist = {}
--- mislead_quest_checklist = {}
--- rooms = {'Living', 'Garden', 'Kitchen','Bedroom'}
-
-actions = {'get', 'light', 'stab', 'climb', 'move', 'go'} -- hard code in
+actions = {'get', 'light', 'stab', 'climb', 'move', 'go'}
 -- action 'go' is treated specially - no need to output the word 'go' in the command
 objects = {'here', 'foggy tentacles'} -- read rest from build file
 exits = {'east','west','north','south',
@@ -51,46 +38,13 @@ exits = {'east','west','north','south',
 				 'tomb of the hero',
 				 'antechamber'
 				}
-objects = TableConcat(objects, exits)
+objects = TableConcat(objects, exits) --make a complete list of objects
 
 symbols = {}
 symbol_mapping = {}
 object_mapping = {}
 
 NUM_ROOMS = 4
-
-
-extra_messages = {"You are standing {wvery close to the the bridge's western foundation{n. If you go west you will be back on solid ground ...",
-                       "The bridge slopes precariously where it extends eastwards towards the lowest point - the center point of the hang bridge.",
-                       "You are {whalfways{n out on the unstable bridge.",
-                       "The bridge slopes precariously where it extends westwards towards the lowest point - the center point of the hang bridge.",
-                       "You are standing {wvery close to the bridge's eastern foundation{n. If you go east you will be back on solid ground ...",
-								"The bridge sways in the wind.", "The hanging bridge creaks dangerously.",
-                "You clasp the ropes firmly as the bridge sways and creaks under you.",
-                "From the castle you hear a distant howling sound, like that of a large dog or other beast.",
-                "The bridge creaks under your feet. Those planks does not seem very sturdy.",
-                "Far below you the ocean roars and throws its waves against the cliff, as if trying its best to reach you.",
-                "Parts of the bridge come loose behind you, falling into the chasm far below!",
-                "A gust of wind causes the bridge to sway precariously.",
-                "Under your feet a plank comes loose, tumbling down. For a moment you dangle over the abyss ...",
-                "The section of rope you hold onto crumble in your hands, parts of it breaking apart. You sway trying to regain balance.",
-							 "Suddenly the plank you stand on gives way under your feet! You fall!",
-               "\nYou try to grab hold of an adjoining plank, but all you manage to do is to ",
-               "divert your fall westwards, towards the cliff face. This is going to hurt ... ",
-               "\n ... The world goes dark ...\n\n",
-               "It is pitch black. You are likely to be eaten by a grue.",
-                 "It's pitch black. You fumble around but cannot find anything.",
-                 "You don't see a thing. You feel around, managing to bump your fingers hard against something. Ouch!",
-                 "You don't see a thing! Blindly grasping the air around you, you find nothing.",
-                 "It's totally dark here. You almost stumble over some un-evenness in the ground.",
-                 "You are completely blind. For a moment you think you hear someone breathing nearby ... \n ... surely you must be mistaken.",
-                 "Blind, you think you find some sort of object on the ground, but it turns out to be just a stone.",
-                 "Blind, you bump into a wall. The wall seems to be covered with some sort of vegetation, but its too damp to burn.",
-                 "You can't see anything, but the air is damp. It feels like you are far underground.",
-								"You don't want to stumble around in blindness anymore. You already ",
-                      "found what you need. Let's get light already!",
-								"Your fingers bump against a splinter of wood in a corner. It smells of resin and seems dry enough to burn! ",
-                    "You pick it up, holding it firmly. Now you just need to {wlight{n it using the flint and steel you carry with you."}
 
 
 local current_room_description = ""
@@ -106,11 +60,9 @@ function login(user, password)
 end
 
 --Function to parse the output of the game (to extract rewards, etc. )
--- TODO - customize for tutorial_world
 function parse_game_output(text)
 	-- extract REWARD if it exists
 	-- text is a list of sentences
-	-- print("Parsing", text)
 	local reward = nil
 	local text_to_agent = ""
 	local running_text = ""
@@ -155,6 +107,7 @@ function parse_game_output(text)
 				reward = JUNK_CMD_REWARD			
 			end
 			running_text = running_text .. ' ' .. text[i]
+
 		-- normal line of text description			
 		else
 			running_text = running_text .. ' ' .. text[i]
@@ -163,12 +116,6 @@ function parse_game_output(text)
 	if not reward then
 		reward = DEFAULT_REWARD
 	end
-
-	-- if reward == JUNK_CMD_REWARD then
-	-- 	text_to_agent = current_room_description
-	-- else
-	-- 	current_room_description = text_to_agent -- cache
-	-- end
 
 	return text_to_agent, reward, exits, objects_available
 end
@@ -196,7 +143,6 @@ function newGame(gameLogger)
 end
 
 -- build game command to send to the game
--- TODO:  need to handle special cases for 'go', etc.
 function build_command(action, object, logger)
 	if logger then
 		logger:write(">>" .. action .. ' '.. object..'\n')
@@ -211,9 +157,8 @@ function build_command(action, object, logger)
 	return action .. ' ' ..object
 end
 
--- TODO
+-- parse line to update symbols and symbol_mapping
 function parseLine(line)
-	-- parse line to update symbols and symbol_mapping
 	-- IMP: make sure we're using simple english - ignores punctuation, etc.
 	local sindx
 	for word in line:gmatch('%a+') do
@@ -226,7 +171,6 @@ function parseLine(line)
 	end
 end
 
--- TODO
 -- read in text data from file with sentences (one sentence per line) - nicely tokenized
 function makeSymbolMapping(filename)
 	local file = io.open(filename, "r");
@@ -253,7 +197,7 @@ function makeSymbolMapping(filename)
 		object_mapping[object] = i
 	end
 	
-	--add aliases for exits (not best way but in order to speed up gameplay)
+	--add aliases for exits (to speed up gameplay)
 	object_mapping['old bridge'] = object_mapping['bridge']
 	object_mapping['ruined temple'] = object_mapping['temple']
 	object_mapping['overgrown courtyard'] = object_mapping['courtyard']
@@ -270,7 +214,7 @@ function convert_text_to_bow(input_text)
 	for i=1,#list_words do			
 		local word = list_words[i]
 		word = word:lower()
-		--ignore words not in vocab
+
 		if symbol_mapping[word] then	
 			vector[symbol_mapping[word]] = vector[symbol_mapping[word]] + 1
 		else
@@ -295,10 +239,10 @@ function convert_text_to_bigram(input_text)
 	for i=1,#list_words-1 do			
 		local word = list_words[i]
 		word = word:lower()
-		--ignore words not in vocab
+
 		next_word = list_words[i+1]:lower()
 		bigram = word .. ' ' .. next_word
-		--ignore words not in vocab
+
 		if not bigram_mapping[bigram] then	
 			table.insert(bigrams, bigram)
 			bigram_mapping[bigram] = #bigrams
@@ -330,7 +274,7 @@ function convert_text_to_ordered_list(input_text)
 		local word = list_words[i]
 		word = word:lower()
 		if REVERSE then cnt2 = STATE_DIM+1-cnt else cnt2 = cnt end
-		--ignore words not in vocab
+
 		if symbol_mapping[word] then
 			vector[cnt2] = symbol_mapping[word]
 		else
@@ -340,7 +284,6 @@ function convert_text_to_ordered_list(input_text)
 		cnt=cnt+1
 	end
 
-	-- return reverse_tensor(vector)
 	return vector
 end
 
@@ -348,9 +291,10 @@ end
 -------------------------VECTOR function -------------------------
 if RECURRENT == 1 then
 	vector_function = convert_text_to_ordered_list
+elseif BIGRAM then
+	vector_function = convert_text_to_bigram
 else
-	-- vector_function = convert_text_to_bow
-	vector_function = convert_text_to_bigram -- for bigram
+	vector_function = convert_text_to_bow	
 end
 -------------------------------------------------------------------
 
@@ -381,11 +325,9 @@ function getState(logger, prev_command)
 		TableConcat(inData, data_in())
 	end
 
-	-- print('indata', inData)
-	-- print('indata2', inData2)
 	local text, reward, exits, objects_available = parse_game_output(inData)		
 
-	-- look only if command was junk
+	-- look if command was junk
 	if reward == JUNK_CMD_REWARD or (prev_command and prev_command ~='go') then		
 		data_out('look')
 		local inData2 = data_in()
@@ -420,12 +362,9 @@ function getState(logger, prev_command)
 	end
 
 	local vector = vector_function(text)
-	-- print("Exits: ", exits)
-	-- print("Objects: ", objects_available)
 	local available_objects
 	if #exits + #objects_available > 0 then
 		available_objects = findObjectIndices(TableConcat(exits, objects_available))
-		-- print("available objects" , available_objects)
 	end
 
 	if logger then
