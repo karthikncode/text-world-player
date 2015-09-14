@@ -76,7 +76,7 @@ require 'hdf5'
 
 local framework
 if TUTORIAL_WORLD then
-    framework = require 'framework2'
+    framework = require 'framework_fantasy'
 else
     framework = require 'framework'
 end
