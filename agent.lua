@@ -8,6 +8,7 @@ cmd:text()
 cmd:text('Options:')
 
 cmd:option('-exp_folder', '', 'name of folder where current exp state is being stored')
+cmd:option('-text_world_location', '', 'location of text-world folder')
 
 cmd:option('-framework', '', 'name of training framework')
 
@@ -102,9 +103,9 @@ client_connect(port)
 login('root', 'root')
 
 if TUTORIAL_WORLD then
-    framework.makeSymbolMapping('../text-world/evennia/contrib/tutorial_world/build.ev')
+    framework.makeSymbolMapping(opt.text_world_location .. 'evennia/contrib/tutorial_world/build.ev')
 else
-    framework.makeSymbolMapping('../text-world/evennia/contrib/text_sims/build.ev')
+    framework.makeSymbolMapping(opt.text_world_location .. 'evennia/contrib/text_sims/build.ev')
 end
 
 print("#symbols", #symbols)
