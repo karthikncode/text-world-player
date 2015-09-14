@@ -6,7 +6,7 @@ Lua Package requirements
 ---------------
 1. [luasocket](http://w3.impa.br/~diego/software/luasocket/)  
 2. [rnn](https://github.com/Element-Research/rnn)  
-3. 'underscore'  
+3. underscore  
 
 Most lua packages can be installed using `luarocks install <pkg>`
 
