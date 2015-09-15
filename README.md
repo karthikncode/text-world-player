@@ -1,6 +1,7 @@
 Prerequisites
 --------------
-Make sure you've setup the game environment using instructions [here](https://github.com/mrkulk/text-world).
+[Torch](http://torch.ch/docs/getting-started.html)  
+Also make sure you've setup the game environment using [these instructions](https://github.com/mrkulk/text-world).
 
 Lua Package requirements  
 ---------------
