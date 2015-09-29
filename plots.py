@@ -13,12 +13,15 @@ for i in range(1,len(sys.argv)):
 max_epochs = 100
 N = min(max_epochs, min(map(len, f)))
 
-colors = ['red', 'orange', 'b','black']
+colors = ['red', 'orange', 'b']
 markers = ['x', 6, '.']
-linestyles = ['-', '--', '-.', ':']
+# linestyles = ['-', '--', '-.', ':']
+
+linestyles = ['-', '-','-']
 # labels = ['Random', 'BOW-DQN']
+labels = ['LSTM-DQN', 'BI-DQN', 'BOW-DQN']
 # labels = ['LSTM-DQN', 'BI-DQN', 'BOW-DQN', 'Random']
-labels = ['BI-DQN', 'BOW-DQN', 'BI-LIN', 'BOW-LIN']
+# labels = ['BI-DQN', 'BOW-DQN', 'BI-LIN', 'BOW-LIN']
 # labels = ['No Transfer', 'Transfer']
 # labels = ['Uniform', 'Prioritized']
 for i in range(len(f)):
@@ -28,9 +31,9 @@ for i in range(len(f)):
 plt.xlabel('Epochs', fontsize=20)
 
 # plt.ylabel('Reward (log scale)', fontsize=25)
-# plt.ylabel('Reward', fontsize=25)
+plt.ylabel('Reward', fontsize=25)
 # plt.ylabel('Max Q', fontsize=20)
-plt.ylabel('Quest Completion', fontsize=20)
+# plt.ylabel('Quest Completion', fontsize=20)
 
 plt.legend(loc=4, fontsize=15)
 labelSize=17
@@ -39,7 +42,7 @@ plt.tick_params(axis='y', labelsize=labelSize)
 
 
 x1,x2,y1,y2 = plt.axis()
-plt.axis((x1,x2,y1,y2)) #set y axis limit
+plt.axis((x1,x2,y1,1.2)) #set y axis limit
 
 
 

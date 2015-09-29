@@ -73,7 +73,6 @@ require 'client'
 require 'utils'
 require 'xlua'
 require 'optim'
-require 'hdf5'
 
 local framework
 if TUTORIAL_WORLD then
@@ -89,7 +88,7 @@ if not dqn then
     require 'nn'
     require 'nngraph'
     require 'nnutils'
-    require 'Scale'
+    -- require 'Scale'
     require 'NeuralQLearner'
     require 'TransitionTable'
     require 'Rectifier'    
