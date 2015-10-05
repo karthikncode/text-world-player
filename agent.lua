@@ -91,10 +91,9 @@ if not dqn then
     -- require 'Scale'
     require 'NeuralQLearner'
     require 'TransitionTable'
-    require 'Rectifier'    
+    require 'Rectifier'
     require 'Embedding'
 end
-
 --  agent login
 local port = 4000 + opt.game_num
 print(port)
@@ -141,7 +140,7 @@ if opt.agent_params then
 	opt.agent_params.objects = framework.getObjects()
 
     if RECURRENT == 0 then
-        if vector_function == convert_text_to_bow2 then            
+        if vector_function == convert_text_to_bow2 then
             opt.agent_params.state_dim = 2 * (#symbols)
         elseif vector_function == convert_text_to_bigram then
             if TUTORIAL_WORLD then
@@ -153,7 +152,7 @@ if opt.agent_params then
             opt.agent_params.state_dim = (#symbols)
         end
     end
-end	
+end
 print("state_dim", opt.agent_params.state_dim)
 
 local agent = dqn[opt.agent](opt.agent_params) -- calls dqn.NeuralQLearner:init
@@ -184,7 +183,7 @@ local nrewards
 local nepisodes
 local episode_reward
 
-local state, reward, terminal, available_objects = framework.newGame() 
+local state, reward, terminal, available_objects = framework.newGame()
 local priority = false
 print("Started RL based training ...")
 local pos_reward_cnt = 0
@@ -200,10 +199,10 @@ while step < opt.steps do
 
     	local action_index, object_index = agent:perceive(reward, state, terminal, nil, nil, available_objects, priority)
 
-    	if reward > 0 then 
+    	if reward > 0 then
     	    pos_reward_cnt = pos_reward_cnt + 1
     	end
-    	    
+
     	-- game over? get next game!
     	if not terminal then
     	    state, reward, terminal, available_objects = framework.step(action_index, object_index)
@@ -214,8 +213,8 @@ while step < opt.steps do
     	    else
     	        priority = false
     	    end
-    	else    	    
-    	    state, reward, terminal, available_objects = framework.newGame()    	    
+    	else
+    	    state, reward, terminal, available_objects = framework.newGame()
     	end
 
     	if step % opt.prog_freq == 0 then
@@ -226,8 +225,8 @@ while step < opt.steps do
     	    pos_reward_cnt = 0
     	end
 
-    	if step%1000 == 0 then 
-    	    collectgarbage() 
+    	if step%1000 == 0 then
+    	    collectgarbage()
     	end
     end
 
@@ -258,7 +257,7 @@ while step < opt.steps do
         for estep=1,opt.eval_steps do
             xlua.progress(estep, opt.eval_steps)
 
-            local action_index, object_index, q_func 
+            local action_index, object_index, q_func
             if not RANDOM_TEST then
                 action_index, object_index, q_func = agent:perceive(reward, state, terminal, true, 0.05, available_objects)
             else
@@ -288,13 +287,13 @@ while step < opt.steps do
                 if(reward > 9) then
                     quest1_reward_cnt =quest1_reward_cnt+1
                 elseif reward > 0.9 then
-                    quest2_reward_cnt = quest2_reward_cnt + 1                
+                    quest2_reward_cnt = quest2_reward_cnt + 1
                 elseif reward > 0 then
                     quest3_reward_cnt = quest3_reward_cnt + 1 --defeat guardian
                 end
             else
                 if(reward > 0.9) then
-                    quest1_reward_cnt =quest1_reward_cnt+1             
+                    quest1_reward_cnt =quest1_reward_cnt+1
                 end
             end
 
@@ -341,7 +340,7 @@ while step < opt.steps do
             test_quest2:add{['% Quest 2'] = quest2_reward_cnt/nepisodes}
             test_quest3:add{['% Quest 3'] = quest3_reward_cnt/nepisodes}
         end
-        
+
         test_avg_R:style{['% Average Reward'] = '-'}; test_avg_R:plot()
         test_avg_Q:style{['% Average Q'] = '-'}; test_avg_Q:plot()
         test_quest1:style{['% Quest 1'] = '-'}; test_quest1:plot()
@@ -408,10 +407,10 @@ while step < opt.steps do
         -- save word embeddings
         embedding_mat = EMBEDDING:forward(torch.range(1, #symbols+1))
         embedding_save = {}
-        for i=1, embedding_mat:size(1)-1 do 
+        for i=1, embedding_mat:size(1)-1 do
             embedding_save[symbols[i]] = embedding_mat[i]
         end
-        embedding_save["NULL"] = embedding_mat[embedding_mat:size(1)]        
+        embedding_save["NULL"] = embedding_mat[embedding_mat:size(1)]
 
         -- description embeddings
         local desc_embeddings
@@ -422,7 +421,7 @@ while step < opt.steps do
                 local embeddings = {}
                 for j=1, #DESCRIPTIONS[i] do
                     local input_vec = framework.vector_function(DESCRIPTIONS[i][j])
-                    local state_tmp = tensor_to_table(input_vec, self.state_dim, self.hist_len)        
+                    local state_tmp = tensor_to_table(input_vec, self.state_dim, self.hist_len)
                     local output_vec = LSTM_MODEL:forward(state_tmp)
                     table.insert(embeddings, output_vec)
                 end
@@ -446,4 +445,3 @@ while step < opt.steps do
         end
     end
 end
-

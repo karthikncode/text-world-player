@@ -1,4 +1,4 @@
---BOW 
+--BOW
 require 'nn'
 require 'nnx'
 require 'nngraph'
@@ -45,10 +45,10 @@ return function(args)
     --             modula.output = output_
     --             modula.gradInput = recursiveResizeAs(sequenceGradInputs[i], gradInput)
     --          end
-             
+
     --          -- backward propagate this step
     --          self.gradInput[step] = self.module:updateGradInput(input, gradOutputTable[step])
-             
+
     --          -- save the output/gradOutput states of this step
     --          for i,modula in ipairs(modules) do
     --             sequenceGradInputs[i] = modula.gradInput
@@ -62,7 +62,7 @@ return function(args)
     function create_network(args)
         rho = args.state_dim --number of backprop steps
         r = nn.Recurrent(
-           n_hid, EMBEDDING, 
+           n_hid, EMBEDDING,
            nn.Linear(n_hid, n_hid), nn.Rectifier(), --check whether rect or sigmoid
            rho
         )
@@ -73,7 +73,7 @@ return function(args)
         rnn_seq:add(nn.Sequencer(r))
         rnn_seq:add(nn.SelectTable(args.state_dim))
         rnn_seq:add(nn.Linear(n_hid, n_hid))
-        
+
         -- alternative - considering outputs from all timepoints
         -- rnn_seq:add(nn.JoinTable(2))
         -- rnn_seq:add(nn.Linear(args.state_dim * n_hid, n_hid))
@@ -87,7 +87,7 @@ return function(args)
             if f > 1 then
                 parallel_flows:add(rnn_seq:clone("weight","bias", "gradWeight", "gradBias"))
             else
-                parallel_flows:add(rnn_seq)  
+                parallel_flows:add(rnn_seq)
             end
         end
 
@@ -99,10 +99,10 @@ return function(args)
         rnn:add(parallel_flows)
         rnn:add(nn.JoinTable(2))
         rnn:add(rnn_out)
-        
+
         if args.gpu >=0 then
             rnn:cuda()
-        end    
+        end
         return rnn
 
     end

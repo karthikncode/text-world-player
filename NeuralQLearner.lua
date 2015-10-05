@@ -76,7 +76,7 @@ function nql:__init(args)
         print('Preloading network file:', self.network)
         -- try to load saved agent
         local err_msg, exp = pcall(torch.load, self.network)
-        if not err_msg then            
+        if not err_msg then
             error("Could not find network file ")
         end
         if self.best and exp.best_model then
@@ -86,7 +86,7 @@ function nql:__init(args)
         end
     else
         print('Creating Agent Network from ' .. self.network)
-        self.network = msg        
+        self.network = msg
         self.network = self:network()
     end
 
@@ -115,7 +115,7 @@ function nql:__init(args)
         maxSize = self.replay_memory, histType = self.histType,
         histSpacing = self.histSpacing, nonTermProb = self.nonTermProb,
         bufferSize = self.bufferSize
-    }   
+    }
 
     self.transitions = dqn.TransitionTable(transition_args)
 
@@ -130,7 +130,7 @@ function nql:__init(args)
     self.q_max = 1
     self.r_max = 1
 
-    self.w, self.dw = self.network:getParameters()    
+    self.w, self.dw = self.network:getParameters()
     self.dw:zero()
 
     self.deltas = self.dw:clone():fill(0)
@@ -178,7 +178,7 @@ function nql:getQUpdate(args)
 
     local target_q_net
     if self.target_q then
-        target_q_net = self.target_network        
+        target_q_net = self.target_network
     else
         target_q_net = self.network
     end
@@ -186,11 +186,11 @@ function nql:getQUpdate(args)
     -- Compute {max_a Q(s_2, a), max_o Q(s_2, o)}.
     if RECURRENT == 0 then
         q2_max = target_q_net:forward(s2)
-    else        
+    else
         local s2_tmp = tensor_to_table(s2, self.state_dim, self.hist_len)
         q2_max = target_q_net:forward(s2_tmp)
     end
-    
+
     q2_max[1] = q2_max[1]:float():max(2) --actions
     q2_max[2] = q2_max[2]:float() -- objects
 
@@ -221,7 +221,7 @@ function nql:getQUpdate(args)
         q_all = self.network:forward(s_tmp)
     end
 
-    
+
     q_all[1] = q_all[1]:float()
     q_all[2] = q_all[2]:float()
 
@@ -243,7 +243,7 @@ function nql:getQUpdate(args)
         delta[2][delta[2]:le(-self.clip_delta)] = -self.clip_delta
     end
 
-    local targets = {torch.zeros(self.minibatch_size, self.n_actions):float(), 
+    local targets = {torch.zeros(self.minibatch_size, self.n_actions):float(),
                     torch.zeros(self.minibatch_size, self.n_objects):float()}
     for i=1,math.min(self.minibatch_size,a:size(1)) do
         targets[1][i][a[i]] = delta[1][i]
@@ -263,7 +263,7 @@ function nql:qLearnMinibatch()
     -- w += alpha * (r + gamma max Q(s2,a2) - Q(s,a)) * dQ(s,a)/dw
 
     local priority_ratio = 0.25-- fraction of samples from 'priority' transitions
-    local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size, priority_ratio)   
+    local s, a, o, r, s2, term, available_objects = self.transitions:sample(self.minibatch_size, priority_ratio)
 
     local targets, delta, q2_max = self:getQUpdate{s=s, a=a, o=o, r=r, s2=s2,
         term=term, update_qmax=true, available_objects=available_objects}
@@ -272,7 +272,7 @@ function nql:qLearnMinibatch()
     self.dw:zero()
 
     -- get new gradient
-    if RECURRENT == 0 then     
+    if RECURRENT == 0 then
         self.network:backward(s, targets)
     else
         local s_tmp = tensor_to_table(s, self.state_dim, self.hist_len)
@@ -357,7 +357,7 @@ end
 
 function nql:compute_validation_statistics()
     local targets, delta, q2_max = self:getQUpdate{s=self.valid_s,
-        a=self.valid_a, o = self.valid_o, r=self.valid_r, s2=self.valid_s2, 
+        a=self.valid_a, o = self.valid_o, r=self.valid_r, s2=self.valid_s2,
         term=self.valid_term, available_objects=self.valid_available_objects}
 
     self.v_avg = self.q_max * (q2_max[1]:mean() + q2_max[2]:mean())/2
@@ -463,7 +463,7 @@ function nql:sample_action(state, testing_ep, available_objects)
     -- q[1]:div(q[1]:norm())
     -- convert available objects to tensor
     available_objects = table_to_binary_tensor(available_objects, self.n_objects)
-    q[2]:exp()    
+    q[2]:exp()
     q[2]:cmul(available_objects)
     -- q[2]:div(q[2]:norm())
 
@@ -488,7 +488,7 @@ function nql:sample_action(state, testing_ep, available_objects)
     self.lastAction = sample_a
     self.lastObject = sample_o
     self.bestq = (q[1][sample_a] + q[2][sample_o])/2
-    
+
     return sample_a, sample_o, q
 end
 
@@ -518,7 +518,7 @@ function nql:getBestRandom(q, N, available_objects)
         -- print("avail OBJECTSSSS",available_objects)
         local maxq = q[available_objects[1]]
         local besta = {available_objects[1]}
-        for i=2, #available_objects do 
+        for i=2, #available_objects do
             a = available_objects[i]
             if q[a] > maxq then
                 besta = { a }
@@ -527,7 +527,7 @@ function nql:getBestRandom(q, N, available_objects)
                 besta[#besta+1] = a
             end
         end
-        local r = torch.random(1, #besta)    
+        local r = torch.random(1, #besta)
         -- print("best object:", besta[r], maxq, q)
         return besta[r], maxq
     end
@@ -551,7 +551,7 @@ function nql:getBestRandom(q, N, available_objects)
 end
 
 
-function nql:greedy(state, available_objects)  
+function nql:greedy(state, available_objects)
     if self.gpu >= 0 then
         state = state:cuda()
     end
@@ -576,7 +576,7 @@ function nql:greedy(state, available_objects)
     self.lastAction = best[1]
     self.lastObject = best[2]
     self.bestq = (maxq[1] + maxq[2])/2
-    
+
     local avail_obj_tensor = table_to_binary_tensor(available_objects, self.n_objects):float()
     q[2] = q[2]:clone():cmul(avail_obj_tensor)
 
