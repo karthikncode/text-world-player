@@ -9,11 +9,11 @@ exp_folder="logs/run1/"
 
 mkdir -p $exp_folder;
 
-STEP_SIZE=1000 #step size for learn_start, eval, saving, etc. 
+STEP_SIZE=1000 #step size for learn_start, eval, saving, etc.
 hist_len=1 #Number of previous states to consider
 max_steps=20 #max steps  in a single episode
 minibatch_size=64 #batch size of transitions used in updates
-quest_levels=1 
+quest_levels=1
 game_num=$1
 agent="NeuralQLearner"
 n_replay=1
@@ -27,19 +27,19 @@ random_test=0
 analyze_test=0
 
 #Set this to 1 to use the RNN/LSTM for representation generation
-recurrent=0
+recurrent=1
 
 #Set this to 1 (along with bow_embedding for netfile)
 # to use bigram representation
 bigram=0
 
 # The models below each represent the type of representation used.
-# One of these options MUST be used. 
+# One of these options MUST be used.
 #-------------------------------
-netfile="\"bow_embedding\""  # BOW-DQN or BI-DQN
-# netfile="\"bow_embedding_simple\""  #BOW-LIN or BI-LIN
-# netfile="\"rnn_embedding\""   #RNN-DQN
-# netfile="\"lstm_embedding\""  #LSTM=DQN
+#netfile="\"bow_embedding\""  # BOW-DQN or BI-DQN
+#netfile="\"bow_embedding_simple\""  #BOW-LIN or BI-LIN
+#netfile="\"rnn_embedding\""   #RNN-DQN
+netfile="\"lstm_embedding\""  #LSTM=DQN
 
 # You can also start by loading a model from a previous run
 # netfile="\"logs/run1\""

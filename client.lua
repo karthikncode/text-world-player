@@ -19,6 +19,7 @@ function data_in_smallworld()
 		text[#text+1] = msg
 		msg, err = client:receive()
 	end
+	sleep(0.0005)	-- Do NOT overpower the server.
 	return text
 end
 
@@ -44,5 +45,3 @@ end
 function data_out(data)
 	client:send(data .. '\n')
 end
-
-
