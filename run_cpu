@@ -74,4 +74,4 @@ num_threads=1
 args="-recurrent $recurrent -name $agent_name -agent $agent -agent_params $agent_params -steps $steps -eval_freq $eval_freq -eval_steps $eval_steps -prog_freq $prog_freq -save_freq $save_freq -actrep $actrep -gpu $gpu -random_starts $random_starts -seed $seed -threads $num_threads"
 echo $args
 
-th agent.lua $args -saveNetworkParams -exp_folder $exp_folder  -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim -max_steps $max_steps -tutorial_world $tutorial_world -random_test $random_test -analyze_test $analyze_test -text_world_location $text_world_location;
+OMP_NUM_THREADS=1 th agent.lua $args -saveNetworkParams -exp_folder $exp_folder  -game_num $game_num -quest_levels $quest_levels -state_dim  $state_dim -max_steps $max_steps -tutorial_world $tutorial_world -random_test $random_test -analyze_test $analyze_test -text_world_location $text_world_location;
