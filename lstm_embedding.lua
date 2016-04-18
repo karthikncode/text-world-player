@@ -80,12 +80,12 @@ return function(args)
           output, cell = unpack(self.recurrentModule:updateOutput{input, prevOutput, prevCell})
        end
        
-       if self.train ~= false then
-          local input_ = self.inputs[self.step]
-          self.inputs[self.step] = self.copyInputs 
-             and rnn.recursiveCopy(input_, input) 
-             or rnn.recursiveSet(input_, input)     
-       end
+       -- if self.train ~= false then
+       --    local input_ = self.inputs[self.step]
+       --    self.inputs[self.step] = self.copyInputs 
+       --       and rnn.recursiveCopy(input_, input) 
+       --       or rnn.recursiveSet(input_, input)     
+       -- end
        
        self.outputs[self.step] = output
        self.cells[self.step] = cell
@@ -97,7 +97,7 @@ return function(args)
        self.gradPrevOutput = nil
        self.updateGradInputStep = nil
        self.accGradParametersStep = nil
-       self.gradParametersAccumulated = false
+       -- self.gradParametersAccumulated = false
        -- note that we don't return the cell, just the output
        return self.output
     end
